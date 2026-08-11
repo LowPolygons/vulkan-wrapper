@@ -1,3 +1,4 @@
+#include "device/helpers.hh"
 #include "glfw_window_handler.hh"
 #include "vulkan/vulkan.hpp"
 #include <fstream>
@@ -157,71 +158,36 @@ private:
     createSyncObjects();
   }
 
-  // It isnt (of course) as simple as now allocating the memory, as different
-  // GPUs may offer differnet types of memory to allocate
-  auto find_memory_type(uint32_t type_filter,
-                        vk::MemoryPropertyFlags property_flags) -> uint32_t {
-    // device mem properties
-    // Contains memoryTypes and memoryHeaps
-    // A mem heap is a 'distinct memotry resource like dedicated vram and swap
-    // space in ram for when vram runs out'
-    vk::PhysicalDeviceMemoryProperties memory_props =
-        physical_device.getMemoryProperties();
-    // typefilter is a bit field of suitable memory types
-    // this iterates over the bits and checks if the bit == 1
-    //
-    // we also need the data to be host visible and coherent for this usecase
-    // these will be defiend in the property_flags
-    for (auto i = 0; i < memory_props.memoryTypeCount; i++) {
-      if ((type_filter & (1 << i)) &&
-          (memory_props.memoryTypes[i].propertyFlags & property_flags) ==
-              property_flags)
-        return i;
-    }
-    throw std::runtime_error("Failed to find suitable memory type");
-  }
-
-  auto create_buffer(vk::DeviceSize buffer_create_info_size,
-                     vk::BufferUsageFlags buffer_create_info_usage,
-                     vk::MemoryPropertyFlags property_flags)
-      -> std::pair<vk::raii::Buffer, vk::raii::DeviceMemory> {
-
-    auto buffer_info =
-        vk::BufferCreateInfo{.size = buffer_create_info_size,
-                             .usage = buffer_create_info_usage,
-                             .sharingMode = vk::SharingMode::eExclusive};
-
-    auto buffer = vk::raii::Buffer(device, buffer_info);
-    auto memory_reqs = vk::MemoryRequirements{buffer.getMemoryRequirements()};
-    auto memory_alloc_info =
-        vk::MemoryAllocateInfo{.allocationSize = memory_reqs.size,
-                               .memoryTypeIndex = find_memory_type(
-                                   memory_reqs.memoryTypeBits, property_flags)};
-    auto buffer_memory = vk::raii::DeviceMemory(device, memory_alloc_info);
-
-    buffer.bindMemory(*buffer_memory, 0);
-
-    return std::make_pair(std::move(buffer), std::move(buffer_memory));
-  }
-
   void createIndexBuffer() {
     auto index_buffer_size = sizeof(uint16_t) * indices.size();
 
-    auto [staging_buff, staging_mem] =
-        create_buffer(index_buffer_size, vk::BufferUsageFlagBits::eTransferSrc,
-                      vk::MemoryPropertyFlagBits::eHostVisible |
-                          vk::MemoryPropertyFlagBits::eHostCoherent);
+    auto maybe_success = DeviceUtil::create_buffer(
+        device, physical_device, index_buffer_size,
+        vk::BufferUsageFlagBits::eTransferSrc,
+        vk::MemoryPropertyFlagBits::eHostVisible |
+            vk::MemoryPropertyFlagBits::eHostCoherent);
+
+    if (!maybe_success)
+      throw std::runtime_error(maybe_success.error());
+
+    auto [staging_buff, staging_mem] = std::move(maybe_success.value());
 
     void *mem_location = staging_mem.mapMemory(0, index_buffer_size);
     memcpy(mem_location, indices.data(),
            static_cast<std::size_t>(index_buffer_size));
     staging_mem.unmapMemory();
 
+    auto gpu_maybe_success =
+        DeviceUtil::create_buffer(device, physical_device, index_buffer_size,
+                                  vk::BufferUsageFlagBits::eIndexBuffer |
+                                      vk::BufferUsageFlagBits::eTransferDst,
+                                  vk::MemoryPropertyFlagBits::eDeviceLocal);
+
+    if (!gpu_maybe_success)
+      throw std::runtime_error(gpu_maybe_success.error());
+
     std::tie(index_buffer, index_buffer_memory) =
-        create_buffer(index_buffer_size,
-                      vk::BufferUsageFlagBits::eIndexBuffer |
-                          vk::BufferUsageFlagBits::eTransferDst,
-                      vk::MemoryPropertyFlagBits::eDeviceLocal);
+        std::move(gpu_maybe_success.value());
 
     copyBuffer(staging_buff, index_buffer, index_buffer_size);
   }
@@ -240,10 +206,17 @@ private:
   void createVertexBuffer() {
     auto vertex_buffer_size = sizeof(ShaderVertex) * vertices.size();
 
+    auto maybe_success = DeviceUtil::create_buffer(
+        device, physical_device, vertex_buffer_size,
+        vk::BufferUsageFlagBits::eTransferSrc,
+        vk::MemoryPropertyFlagBits::eHostVisible |
+            vk::MemoryPropertyFlagBits::eHostCoherent);
+
+    if (!maybe_success)
+      throw std::runtime_error(maybe_success.error());
+
     auto [ret_vertex_buffer, ret_vertex_buffer_memory] =
-        create_buffer(vertex_buffer_size, vk::BufferUsageFlagBits::eTransferSrc,
-                      vk::MemoryPropertyFlagBits::eHostVisible |
-                          vk::MemoryPropertyFlagBits::eHostCoherent);
+        std::move(maybe_success.value());
 
     // Map the cpu memory to the gpu
     void *memory_location =
@@ -258,13 +231,17 @@ private:
     // TODO: understand why i have to map/unmap the memory
     ret_vertex_buffer_memory.unmapMemory();
 
-    // unpacks the result directly into std::tie. In psuedo code its just
-    //  (vertex_buffer, vertex_buffer_memory) = create_buffer()
+    auto gpu_maybe_success =
+        DeviceUtil::create_buffer(device, physical_device, vertex_buffer_size,
+                                  vk::BufferUsageFlagBits::eVertexBuffer |
+                                      vk::BufferUsageFlagBits::eTransferDst,
+                                  vk::MemoryPropertyFlagBits::eDeviceLocal);
+
+    if (!gpu_maybe_success)
+      throw std::runtime_error(gpu_maybe_success.error());
+
     std::tie(vertex_buffer, vertex_buffer_memory) =
-        create_buffer(vertex_buffer_size,
-                      vk::BufferUsageFlagBits::eVertexBuffer |
-                          vk::BufferUsageFlagBits::eTransferDst,
-                      vk::MemoryPropertyFlagBits::eDeviceLocal);
+        std::move(gpu_maybe_success.value());
 
     copyBuffer(ret_vertex_buffer, vertex_buffer, vertex_buffer_size);
   }

@@ -1,5 +1,5 @@
 rm -rf build/
 
-cmake -S . -B build
+CXX=clang++-20 cmake -S . -B build
 
 cmake --build build
