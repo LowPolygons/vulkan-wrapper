@@ -26,6 +26,11 @@ constexpr bool SHADERS_NOT_FOUND = false;
 #include <iostream>
 #include <stdexcept>
 
+struct ImageProperties {
+  glm::f32 win_x;
+  glm::f32 win_y;
+};
+
 struct ShaderVertex {
   glm::vec2 position;
   glm::vec3 colour;
@@ -66,11 +71,11 @@ struct ShaderVertex {
 };
 
 const std::vector<ShaderVertex> vertices = {
-    {{-0.5, -0.5}, {1.0, 1.0, 0.0}, 13.0},
-    {{0.5, -0.5}, {1.0, 0.0, 1.0}, 12.0},
-    {{0.5, 0.5}, {0.0, 1.0, 1.0}, 5.0},
-    {{-0.5, 0.9}, {1.0, 1.0, 1.0}, 12.0},
-};
+    {{-1.0, -1.0}, {0.0, 0.0, 0.0}, 5.0},
+    {{1.0, -1.0}, {1.0, 0.0, 0.0}, 5.0},
+    {{1.0, 1.0}, {0.0, 1.0, 0.0}, 5.0},
+    {{-1.0, 1.0}, {0.0, 0.0, 1.0}, 5.0}};
+
 const std::vector<uint16_t> indices = {0, 1, 2, 2, 3, 0};
 
 const std::vector<const char *> REQUIRED_DEVICE_EXTENSIONS = {
@@ -513,6 +518,16 @@ private:
     command_buffers[current_frame_index].bindPipeline(
         vk::PipelineBindPoint::eGraphics, *grapics_pipeline);
 
+    ImageProperties push_consts{
+        .win_x = static_cast<float>(this->swap_chain_extent.width),
+        .win_y = static_cast<float>(this->swap_chain_extent.height)};
+
+    assert(sizeof(ImageProperties) <= 128);
+
+    command_buffers[current_frame_index].pushConstants(
+        *pipeline_layout, vk::ShaderStageFlagBits::eFragment, 0,
+        sizeof(ImageProperties), &push_consts);
+
     command_buffers[current_frame_index].setViewport(
         0,
         vk::Viewport(0.0f, 0.0f, static_cast<float>(swap_chain_extent.width),
@@ -578,8 +593,7 @@ private:
   // things, such as for presentation to the screen or for color attachements
   // etc
   //
-  // This function transitions the iamge layout from ::UNdefined to
-  // ::eColorAttachementOptimal
+  // This function transitions the iamge layout from one layout to another
   // https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/03_Drawing/01_Command_buffers.html
   void transition_image_layout(uint32_t imageIndex, vk::ImageLayout old_layout,
                                vk::ImageLayout new_layout,
@@ -678,7 +692,7 @@ private:
     auto shader_bytecode = read_shader("shaders/slang.spv");
     vk::raii::ShaderModule shader_module = createShaderModule(shader_bytecode);
 
-    // The use the shader, the pipeline stages need to be assigned via a
+    // To use the shader, the pipeline stages need to be assigned via a
     // structure
     vk::PipelineShaderStageCreateInfo vertex_shader_stage_info{
         .stage = vk::ShaderStageFlagBits::eVertex,
@@ -691,18 +705,18 @@ private:
     std::vector<vk::PipelineShaderStageCreateInfo> shader_stages = {
         vertex_shader_stage_info, frag_shader_stage_info};
 
-    // Describes the format of the vertex data passed to the shader:
-    // -> Bindings: spacing between data and whether the data is per-vertex or
-    // instance
-    // -> Attribute descriptions: type of the attributes passed to the vertex
-    // shader, which bindinf to load them from and at which offset
-
+    // WARN: Not 100% sure on
     std::vector<vk::DynamicState> dynamic_states = {vk::DynamicState::eViewport,
                                                     vk::DynamicState::eScissor};
     vk::PipelineDynamicStateCreateInfo dynamic_state{
         .dynamicStateCount = static_cast<uint32_t>(dynamic_states.size()),
         .pDynamicStates = dynamic_states.data()};
 
+    // Describes the format of the vertex data passed to the shader:
+    // -> Bindings: spacing between data and whether the data is per-vertex or
+    // instance
+    // -> Attribute descriptions: type of the attributes passed to the vertex
+    // shader, which bindinf to load them from and at which offset
     // Get descriptors of the data that will be passed in
     auto binding_description = ShaderVertex::get_binding_descriptions();
     auto attribute_description = ShaderVertex::get_attribute_descriptions();
@@ -744,6 +758,7 @@ private:
         .depthClampEnable = vk::False,
         .rasterizerDiscardEnable = vk::False,
         // NOTE: This is useful (wireframes accessible here)
+        // .polygonMode = vk::PolygonMode::eLine,
         .polygonMode = vk::PolygonMode::eFill,
         // NOTE: Potentially interesting
         .cullMode = vk::CullModeFlagBits::eBack,
@@ -784,9 +799,17 @@ private:
         .attachmentCount = 1,
         .pAttachments = &colour_blend_attachment};
 
+    // Push Constant Setup
+    // TODO: Use templating here
+    vk::PushConstantRange push_constant_range;
+    push_constant_range.setStageFlags(vk::ShaderStageFlagBits::eFragment)
+        .setOffset(0)
+        .setSize(sizeof(ImageProperties));
+
     // Update the pipeline layout
     vk::PipelineLayoutCreateInfo pipeline_layout_info{
-        .setLayoutCount = 0, .pushConstantRangeCount = 0};
+        .pushConstantRangeCount = 1,
+        .pPushConstantRanges = &push_constant_range};
 
     pipeline_layout = vk::raii::PipelineLayout(device, pipeline_layout_info);
 

@@ -1,16 +1,3 @@
-static float2 positions[3] = float2[](
-    float2(0.0, -0.8),
-    float2(0.8, 0.8),
-    float2(-0.8, 0.8)
-);
-
-static float3 colors[3] = float3[](
-    float3(1.0, 1.0, 0.0),
-    float3(0.0, 1.0, 1.0),
-    float3(1.0, 0.0, 1.0)
-);
-
-
 struct VertexInput {
     float2 position;
     float3 colour;
@@ -22,8 +9,29 @@ struct VertexOutput {
     float4 sv_position : SV_Position;
 };
 
+struct Circle {
+    float2 center;
+    float radius;
+}
+
+
+struct ImageProperties {
+  float win_x;
+  float win_y;
+};
+
+bool isInCircle(Circle circle, float2 position) {
+    float2 distance_from_center = position - circle.center;
+    float modulus = 
+        distance_from_center[0] * distance_from_center[0] 
+        + distance_from_center[1] * distance_from_center[1];
+
+    return modulus <= circle.radius*circle.radius;
+}
+
 [shader("vertex")]
 VertexOutput vertMain(VertexInput input) {
+
     VertexOutput output;
     // Remember that this is per vertex, and due to interpolation this will create a smooth gradient in the frag shader? i think; the interpolation happens somewhere
     output.sv_position = float4(input.position, 0.0, 1.0);
@@ -40,9 +48,26 @@ VertexOutput vertMain(VertexInput input) {
     return output;
 }
 
+
+[[vk::push_constant]] 
+ImageProperties properties;
+
 [shader("fragment")]
 float4 fragMain(VertexOutput inVert) : SV_Target
 {
+
     float3 color = inVert.color;
-    return float4(color, 1.0);
+
+    Circle circle;
+
+    circle.center = {properties.win_x / 2, properties.win_y / 2};
+    circle.radius = 300;
+
+    float2 pos = {inVert.sv_position[0], inVert.sv_position[1]};
+
+    if (isInCircle(circle, pos)) {
+        return float4(color, 1.0);
+    }
+
+    return float4(color[2],color[1],color[0],1.0);
 }
