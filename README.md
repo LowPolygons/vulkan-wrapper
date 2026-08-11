@@ -1,50 +1,54 @@
-# Vulkan Pipeline 
+# Vulkan Pipeline
 
 This serves less as a README for using the script, and more for documenting my understanding of how it works
 
 # What Happens
 
-It is sort of split into 3 categories:
+There are 11 steps in the initialisation phase
 
-- Software->Hardware Interface Initialisation
-- Graphics Pipeline Initialisation
-- Command Pipeline initialisation
+1. Initialise a Window context
 
-### Software-Hardware Interface Initialisation
-1) Initialise a Window context
-   
-    -> Create a GLFW instance
-   
-2) Create a Vulkan context and Instance
-   
-    -> From the context, evaluate valid layers, extensions, a debugger and create instance
-   
-3) Create a Surface from the window
-   
-    -> Get a window surface from GLFW and make it vulkan applicable with the instance
-   
-4) Create a Physical Device
-   
-    -> Of the physical devices available, pick one and ensure it supports all requirements
-   
-5) Create a Logical Device, and a Queue
-   
-    -> Determine the queue features needed and ensure they are supported
+   -> Create a GLFW instance
 
-    -> Create an interface between the physical device and the vulkan driver
-   
-6) Create a Swap Chain
-    
-    -> Determine the most desirable metadata for the swap chain support by the device and create it
-   
-7) Create some Image Views
-    
-    -> Vulkan driver needs to know how to modify each `vk::Image`, this details how
+2. Create a Vulkan context and Instance
 
+   -> From the context, evaluate valid layers, extensions, a debugger and create instance
 
-### Graphics Pipeline Initialisation
-Note: This is all currently wrapped in the 'createGraphicsPipeline' function
+3. Create a Surface from the window
 
+   -> Get a window surface from GLFW and make it vulkan applicable with the instance
+
+4. Create a Physical Device
+
+   -> Of the physical devices available, pick one and ensure it supports all requirements
+
+5. Create a Logical Device, and a Queue
+
+   -> Determine the queue features needed and ensure they are supported
+
+   -> Create an interface between the physical device and the vulkan driver
+
+6. Create a Swap Chain
+   -> Determine the most desirable metadata for the swap chain support by the device and create it
+7. Create some Image Views
+
+   -> Vulkan driver needs to know how to modify each `vk::Image`, this details how
+
+8. Initialise the graphics pipeline
+
+   -> Details listed in `Graphics Pipeline Initialisation`
+
+9. Initialise the Command Buffers
+
+   -> Create a command pool, create a list of command buffers and store
+
+10. Initialise the Vertex/Index Buffers
+
+    -> The buffers used to store the actual vertex/index data of the triangles
+
+11. Initialise the synchronisation objects
+
+    -> The drawing makes use of semaphores and fences which are pre-allocated
 
 ## Initialise a Window Context
 
@@ -54,46 +58,47 @@ GLFW interfaces extremely well with Vulkan, making it a desirable choice
 
 ## Create a Vulkan context and Instance
 
-A `vk::raii::Context context` object is initialised, from which stems every object to come 
+A `vk::raii::Context context` object is initialised, from which stems every object to come
 
-It sort of acts as a loader for vulkan to *exist*, but not to be used. For that we need an instance
+It sort of acts as a loader for vulkan to _exist_, but not to be used. For that we need an instance
 
 A vulkan instance needs some info:
 
-- ### `App Info`
-    -> Application name
-  
-    -> Application Version
-  
-    -> Engine Name (no engine)
-  
-    -> Engine Version
-  
-    -> Api Version
+- ### App Info
+
+  -> Application name
+
+  -> Application Version
+
+  -> Engine Name (no engine)
+
+  -> Engine Version
+
+  -> Api Version
 
 Just some boiler plate, really. More crucially, we need:
 
 - ### Layers
 
-    These are components that hook vulkan calls and perform additional operations
+  These are components that hook vulkan calls and perform additional operations
 
-    There are some layers, named validation layers, that this program requires 
+  There are some layers, named validation layers, that this program requires
 
-    I followed the Khronos tutorial, so it needs the 'VK_LAYER_KHRONOS_validation' feature - there are khronos objects used in this version
+  I followed the Khronos tutorial, so it needs the 'VK_LAYER_KHRONOS_validation' feature - there are khronos objects used in this version
 
-    The layers that the current context has are loaded, and the required layers are searched for in this list
+  The layers that the current context has are loaded, and the required layers are searched for in this list
 
 - ### Extensions
 
-    As the name suggests, these are extensions that the vulkan context MAY offer
+  As the name suggests, these are extensions that the vulkan context MAY offer
 
-    GLFW Has a list of extensions that it requires to interface with vulkan
+  GLFW Has a list of extensions that it requires to interface with vulkan
 
-    The program also makes use of a Debug Messenger - when things go wrong, it knows and prints a message
+  The program also makes use of a Debug Messenger - when things go wrong, it knows and prints a message
 
-    Again, it checks that the vulkan context supports all the required extensions
+  Again, it checks that the vulkan context supports all the required extensions
 
-With this information, the `vk::raii::Instance instance` is created 
+With this information, the `vk::raii::Instance instance` is created
 
 ## Create a Surface from the window
 
@@ -102,7 +107,6 @@ Thanks to GLFW interfacing so well with Vulkan, this is extremely simple. The so
 Using the previously acquired instance, we create a vulkan surface.
 
 Note: this is a Khronos API `vk::raii::SurfaceKHR surface`
-
 
 ## Create a Physical Device
 
@@ -114,40 +118,42 @@ It will then ensure that this GPU supports all the right extensions, api version
 
 - ### Note on Queues in relation to the physical device
 
-    A queue is where all operations are submitted. Queues exist in families, each with different subsets of features
+  A queue is where all operations are submitted. Queues exist in families, each with different subsets of features
 
-    This API is restricted to graphics-supported queues. 
+  This API is restricted to graphics-supported queues.
 
-    WARN: This may need to change with compute shaders, I'm honestly not sure
+  WARN: This may need to change with compute shaders, I'm honestly not sure
 
-    With this, the `vk::raii::PhysicalDevice physical_device` is created
+  With this, the `vk::raii::PhysicalDevice physical_device` is created
 
-    The question to be answered: Why does it need a Physical AND Logical Device?
-    
-    A good quote from reddit: "if you have a game that is using vulkan and some other desktop app that uses it as well they both need to function on the same physical device without interferring with each other hence the need for logical devices."
+  The question to be answered: Why does it need a Physical AND Logical Device?
+
+  A good quote from reddit: "if you have a game that is using vulkan and some other desktop app that uses it as well they both need to function on the same physical device without interferring with each other hence the need for logical devices."
 
 ## Create a Logical Device, and a Queue
 
 This is a two stage process
 
 - ### Queue Properties
-    The queue is sourced from the logical device, and the queue needs to support the right features for the pipeline. 
 
-    In this case, it needs to support graphics features.
+  The queue is sourced from the logical device, and the queue needs to support the right features for the pipeline.
 
-    Queues are split into families, each with different properties.
+  In this case, it needs to support graphics features.
 
-    The code first gets a list of all the queue family properties fromt he physical device which it supports
+  Queues are split into families, each with different properties.
 
-    It iterates over this list, and searches for a queue whose queue flags contains `vk::QueueFlagBits::eGraphics`
-    and one where the physical device and surface support.
+  The code first gets a list of all the queue family properties fromt he physical device which it supports
+
+  It iterates over this list, and searches for a queue whose queue flags contains `vk::QueueFlagBits::eGraphics`
+  and one where the physical device and surface support.
 
 - ### Device Features
-    As the logical device is essentially an interface for the driver to access the physical device,
 
-    the logical device needs to know what features to support. The 'Vulkan way' of doing this is a little strange.
+  As the logical device is essentially an interface for the driver to access the physical device,
 
-    It expects a chain/linked list of features called a 'Structure Chain', and wants a pointer to the first element
+  the logical device needs to know what features to support. The 'Vulkan way' of doing this is a little strange.
+
+  It expects a chain/linked list of features called a 'Structure Chain', and wants a pointer to the first element
 
 With this data, a `vk::raii::Device` can be instantiated, along with a `vk::raii::Queue`
 
@@ -157,15 +163,16 @@ First, understanding why the swapchain exists is useful
 
 ### What is a swap chain?
 
-  If the OS only provided one image to draw on, throughout the process of drawing the next frame 
-  there would be times where part of the screen is the next frame and the rest is the current -> Screen Tearing!
-  It also allows the GPU to start rendering the next frame without waiting for the previous to finish displaying
+If the OS only provided one image to draw on, throughout the process of drawing the next frame
+there would be times where part of the screen is the next frame and the rest is the current -> Screen Tearing!
+It also allows the GPU to start rendering the next frame without waiting for the previous to finish displaying
 
 Before a swap chain can be created, it needs to know some details that the physical device can support relating to it
 
 The code gets a list of the following supported details:
 
 ### Pre-determinable Details
+
     -> Surface Capabilties
         --> Metadata such as min/max images allowed in the swap chain
             or the min/max width and height of images in the swapchain (Swap Extent)
@@ -176,7 +183,7 @@ The code gets a list of the following supported details:
         --> How the new images are transfered to the screen
             --> Immediate -> no vsync, less latency, potential screen tearing
             --> Fifo -> Standard vsync queue like structure
-            --> Fifo Relaxed -> If the app is laggy and the queue is empty during a 'vertical blank', 
+            --> Fifo Relaxed -> If the app is laggy and the queue is empty during a 'vertical blank',
                                 it just immediatedly displays the immage. Mild stutter/tearing
             --> Mailbox -> Triple-buffering low-latency vsync -> complex
 
@@ -199,8 +206,85 @@ The program needs (readily):
 
 In the swap chain step, the program got a list of `vk::Image` objects corresponding to the images in the swap chain
 
-These are just raw memory chunks with no indication of *how* to draw to them
+These are just raw memory chunks with no indication of _how_ to draw to them
 
-The image views section specifies how images should be rendered. 
+The image views section specifies how images should be rendered.
 
 These attributes are Hard Coded, NOT chosen from an existing structure
+
+## Graphics Pipeline Initialisation
+
+Note: This is all currently wrapped in the 'createGraphicsPipeline' function
+
+The graphics pipeline has various stages and consists of two types of functions:
+
+- Programmable - as the name suggests, these can have code written for them.
+- Configurable - these functions are static, however the functionality can be altered with various flags in setup
+
+Along with this, some of the functions are optional.
+
+1. Create a Shader module
+
+   -> Read in the bytecode of the shader binary and initialise a `vk::raii::ShaderModule`
+
+2. Extract the entry points for the programmable stages, and initialise a list of stages
+
+   -> These can be defined in one or multiple binaries
+
+3. Set up various pieces of standalone metadata to the pipeline
+
+   -> Including tyhe viewport, scissor, vertex struct metadata, etc
+
+4. Specify various settings for the configurable stages
+
+   -> A lot of these may be best passed in
+
+5. Use these configs to create a PipelineLayout
+
+   -> Quite a lot of parameters, worth looking at in the code
+
+## Initialise the Command Buffers
+
+The command buffer objects take in a command pool - command pools are opaque objects that command buffer memory is allocated from.
+
+It takes in flags which specifies that it can reset individual command buffers in the pool, and which queue family to use
+
+This pool is then used to create a list of command buffers, one for each frame in flight
+
+## Initialise the Vertex/Index Buffers
+
+The vertex/index buffers contain the list of triangle vertices and the indices which form each triangle. These need to be transfered on the GPU
+
+For both of them, a buffer is created locally and on the GPU. The memory is copied onto the local buffer
+
+A local command buffer is then created which performs a GPU-powered copy of the local buffer onto the GPU buffer. This is submitted to the same graphics queue
+
+## Initialise the synchronisation objects
+
+During the drawing phase running every tick, almost everything is asynchronous, and sempahores and fences are use to help synchronise everything.
+
+A `Semaphore` can be treated like a conductor:
+
+Imagine a Semaphore submitting two jobs: A, B, where B depends on A
+
+'A' will signal to the semaphore when it is finished, and B will wait until the semaphore prompts it to start
+
+A `Fence` is a similar object, but it used on the CPU.
+
+The semaphores are used when synchronising the swapchain on the GPU
+
+A fence is used to wait for the previous frame to finish rendering
+
+For each frame in flight, there is:
+
+- A 'Present Complete' Semaphore
+
+  -> This is signalled when a list of commands from a command buffer is submitted to the queue
+
+- A 'Render Finished' Semaphore
+
+  -> This is signalled when the command buffer submit job is completed
+
+- A 'Draw' Fence
+
+  -> This is used as a barrier to wait for all of the queue submissions to return to prevent the next instance of 'drawFrame' from running
