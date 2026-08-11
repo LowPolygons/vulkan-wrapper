@@ -29,6 +29,7 @@ constexpr bool SHADERS_NOT_FOUND = false;
 struct ImageProperties {
   glm::f32 win_x;
   glm::f32 win_y;
+  glm::f32 power;
 };
 
 struct ShaderVertex {
@@ -518,9 +519,11 @@ private:
     command_buffers[current_frame_index].bindPipeline(
         vk::PipelineBindPoint::eGraphics, *grapics_pipeline);
 
+    power = power + 0.01;
     ImageProperties push_consts{
         .win_x = static_cast<float>(this->swap_chain_extent.width),
-        .win_y = static_cast<float>(this->swap_chain_extent.height)};
+        .win_y = static_cast<float>(this->swap_chain_extent.height),
+        .power = power};
 
     assert(sizeof(ImageProperties) <= 128);
 
@@ -1298,6 +1301,8 @@ private:
   std::vector<vk::raii::Semaphore> render_finished_semaphores;
   std::vector<vk::raii::Fence> draw_fences;
   uint32_t current_frame_index = 0;
+
+  float power = 1.0;
 };
 
 int main() {
