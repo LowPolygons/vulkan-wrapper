@@ -1,5 +1,5 @@
 #include "device/helpers.hh"
-#include "glfw_window_handler.hh"
+#include "glfw/glfw_window_handler.hh"
 #include "vulkan/vulkan.hpp"
 #include <fstream>
 #include <limits>
@@ -1179,8 +1179,6 @@ private:
   void createInstance() {
     vk::ApplicationInfo appInfo{.pApplicationName = "Hello World Triangle",
                                 .applicationVersion = VK_MAKE_VERSION(1, 0, 0),
-                                .pEngineName = "No Engine",
-                                .engineVersion = VK_MAKE_VERSION(1, 0, 0),
                                 .apiVersion = vk::ApiVersion13};
 
     // Get required layers
@@ -1254,15 +1252,18 @@ private:
   vk::raii::Instance instance = nullptr;
   vk::raii::DebugUtilsMessengerEXT debug_messenger = nullptr;
   vk::raii::SurfaceKHR surface = nullptr;
+
   vk::raii::PhysicalDevice physical_device = nullptr;
   vk::raii::Device device = nullptr;
   uint32_t queue_index;
   vk::raii::Queue graphics_queue = nullptr;
+
   vk::raii::SwapchainKHR swap_chain = nullptr;
   std::vector<vk::Image> swap_chain_images;
   vk::SurfaceFormatKHR swap_chain_surface_format;
   vk::Extent2D swap_chain_extent;
   std::vector<vk::raii::ImageView> swap_chain_image_views;
+
   // Useful for specifying push contstants too
   vk::raii::PipelineLayout pipeline_layout = nullptr;
   vk::raii::Pipeline grapics_pipeline = nullptr;

@@ -38,14 +38,12 @@ float sphere_msd(float3 position, float radius)
     return length(position) - radius;
 }
 
-float mandelbulb_msd(float3 position, float power)
-{
+float mandelbulb_msd(float3 position, float power) {
     float3 z = position;
     float dr = 1;
     float r;
 
-    for (int i = 0; i < 15; i++)
-    {
+    for (int i = 0; i < 15; i++) {
         r = length(z);
         if (r > 2)
             break;
@@ -61,6 +59,64 @@ float mandelbulb_msd(float3 position, float power)
     }
     return 0.5 * log(r) * r / dr;
 }
+
+// float mandelbulb_msd(
+//     float3 position,
+//     int iterations,
+//     float power,
+//     float bailout)
+// {
+//     float3 z = position;
+//     float derivative = 1.0;
+//     float radius = 0.0;
+//
+//     for (int i = 0; i < iterations; i++)
+//     {
+//         radius = length(z);
+//
+//         if (radius > bailout)
+//             break;
+//
+//         if (radius < 1e-6)
+//             return 0.0;
+//
+//         float theta = acos(
+//             clamp(z.z / radius, -1.0, 1.0)
+//         );
+//
+//         float phi;
+//
+//         if (abs(z.x) < 1e-6 && abs(z.y) < 1e-6)
+//         {
+//             phi = 0.0;
+//         }
+//         else
+//         {
+//             phi = atan2(z.y, z.x);
+//         }
+//
+//         derivative =
+//             power *
+//             pow(radius, power - 1.0) *
+//             derivative +
+//             1.0;
+//
+//         float radius_power = pow(radius, power);
+//
+//         theta *= power;
+//         phi *= power;
+//
+//         z = radius_power * float3(
+//             sin(theta) * cos(phi),
+//             sin(theta) * sin(phi),
+//             cos(theta)
+//         );
+//
+//         z += position;
+//     }
+//
+//     return 0.5 * log(radius) * radius / derivative;
+// }
 
 float3 get_norm_ray_direction(float width, float height, float2 input_pos)
 {
@@ -104,11 +160,14 @@ VertexOutput vertMain(VertexInput input)
 
 float3 estimate_normal(float3 p, float epsilon, float power)
 {
-    float dx = mandelbulb_msd(p + float3(epsilon, 0, 0), power) - mandelbulb_msd(p - float3(epsilon, 0, 0), power);
+    float dx = mandelbulb_msd(p + float3(epsilon, 0, 0), power)
+             - mandelbulb_msd(p - float3(epsilon, 0, 0), power);
 
-    float dy = mandelbulb_msd(p + float3(0, epsilon, 0), power) - mandelbulb_msd(p - float3(0, epsilon, 0), power);
+    float dy = mandelbulb_msd(p + float3(0, epsilon, 0), power)
+             - mandelbulb_msd(p - float3(0, epsilon, 0), power);
 
-    float dz = mandelbulb_msd(p + float3(0, 0, epsilon), power) - mandelbulb_msd(p - float3(0, 0, epsilon), power);
+    float dz = mandelbulb_msd(p + float3(0, 0, epsilon), power)
+             - mandelbulb_msd(p - float3(0, 0, epsilon), power);
 
     return normalize(float3(dx, dy, dz));
 }
@@ -120,22 +179,28 @@ ImageProperties properties;
 float4 fragMain(VertexOutput inVert) : SV_Target
 {
 
-    float3 light_dir = { 10.0, 10.0, -10.0 };
 
-    float3 bulb_colour = { 0.8, 0.23, 0.32 };
+    float3 light_dir = {10.0,10.0,-10.0};
+
+    float3 bulb_colour = {0.8, 0.23, 0.32};
     float4 nothing_colour = { 0.05, 0.05, 0.05, 1.0 };
+
+    float power = 15.0;
+    float bailout = 20.0;
+    int precision = 150;
 
     float TOO_FAR = 15;
 
     float3 ray_dir = get_norm_ray_direction(properties.win_x, properties.win_y, { inVert.sv_position[0], inVert.sv_position[1] });
 
-    float3 ray_position = float3(4.5, 0.0, 0.0);
+    float3 ray_position = float3(4, 0.0, 0);
 
     for (int i = 0; i < 10000; i++)
     {
         float distance = mandelbulb_msd(
             ray_position,
-            properties.power);
+            properties.power 
+        );
 
         if (isnan(distance))
             break;
@@ -144,10 +209,8 @@ float4 fragMain(VertexOutput inVert) : SV_Target
         {
             float3 normal = estimate_normal(ray_position + distance * ray_dir, 0.01, properties.power);
 
-            // return float4(abs(normal), 1.0);
-
             float brightness = dot(normal, normalize(light_dir));
-            return float4(bulb_colour * brightness, 1.0);
+            return float4(abs(normal) * brightness, 1.0);
         }
 
         if (distance >= TOO_FAR)
@@ -157,4 +220,5 @@ float4 fragMain(VertexOutput inVert) : SV_Target
     }
 
     return nothing_colour;
+
 }

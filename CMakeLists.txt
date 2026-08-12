@@ -37,9 +37,10 @@ function (add_slang_shader_target TARGET)
 endfunction()
 
 add_executable(vulkan_app
-    src/glfw_window_handler.cc
+    src/glfw/glfw_window_handler.cc
     src/device/helpers.cc
     src/device/device_container.cc
+    src/instance_and_surface/instance_and_surface_container.cc
     src/main.cpp
 )
 
