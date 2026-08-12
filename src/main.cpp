@@ -496,11 +496,12 @@ private:
     command_buffers[current_frame_index].bindPipeline(
         vk::PipelineBindPoint::eGraphics, *grapics_pipeline);
 
-    power = power + 0.01;
+    power = power + (1.0 / 300.0) * (3.14159265 / 2.0);
+
     ImageProperties push_consts{
         .win_x = static_cast<float>(this->swap_chain_extent.width),
         .win_y = static_cast<float>(this->swap_chain_extent.height),
-        .power = power};
+        .power = 10 * std::sin(power)};
 
     assert(sizeof(ImageProperties) <= 128);
 

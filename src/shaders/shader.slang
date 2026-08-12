@@ -209,8 +209,12 @@ float4 fragMain(VertexOutput inVert) : SV_Target
         {
             float3 normal = estimate_normal(ray_position + distance * ray_dir, 0.01, properties.power);
 
-            float brightness = dot(normal, normalize(light_dir));
-            return float4(abs(normal) * brightness, 1.0);
+            normal = (normal + 1.0) / 2.0;
+
+            return float4(normal, 1.0);
+
+            // float brightness = dot(normal, normalize(light_dir));
+            // return float4(abs(normal) * brightness, 1.0);
         }
 
         if (distance >= TOO_FAR)
