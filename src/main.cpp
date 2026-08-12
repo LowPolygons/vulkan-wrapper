@@ -1,3 +1,4 @@
+#include "buffers/buffer_copy.hh"
 #include "device/helpers.hh"
 #include "glfw/glfw_window_handler.hh"
 #include "vulkan/vulkan.hpp"
@@ -189,7 +190,10 @@ private:
     std::tie(index_buffer, index_buffer_memory) =
         std::move(gpu_maybe_success.value());
 
-    copyBuffer(staging_buff, index_buffer, index_buffer_size);
+    BufferUtil::copy_buffer(
+        device, graphics_queue, command_pool, staging_buff, index_buffer,
+        BufferUtil::BufferCopyData{.buff_size = index_buffer_size});
+    // copyBuffer(staging_buff, index_buffer, index_buffer_size);
   }
 
   // WARN: It is worth noting that you are not supposed to call allocateMemory
@@ -243,37 +247,9 @@ private:
     std::tie(vertex_buffer, vertex_buffer_memory) =
         std::move(gpu_maybe_success.value());
 
-    copyBuffer(ret_vertex_buffer, vertex_buffer, vertex_buffer_size);
-  }
-
-  void copyBuffer(vk::raii::Buffer &source_buffer,
-                  vk::raii::Buffer &dest_buffer, vk::DeviceSize buffer_size) {
-    auto allocation_info =
-        vk::CommandBufferAllocateInfo{.commandPool = command_pool,
-                                      .level = vk::CommandBufferLevel::ePrimary,
-                                      .commandBufferCount = 1};
-    auto command_copy_buffer = vk::raii::CommandBuffer{
-        std::move(device.allocateCommandBuffers(allocation_info).front())};
-
-    command_copy_buffer.begin(
-        // Telling the driver the intention is good practise apparently
-        {.flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit});
-
-    // vk::BufferCopy is an array of regions to copy - the regions consist of a
-    // source buffer offset, dest buffer offset and size
-    command_copy_buffer.copyBuffer(*source_buffer, *dest_buffer,
-                                   vk::BufferCopy(0, 0, buffer_size));
-    command_copy_buffer.end();
-
-    // This is a GPU op, so queue it and forcefully wait
-    graphics_queue.submit(
-        vk::SubmitInfo{.commandBufferCount = 1,
-                       .pCommandBuffers = &*command_copy_buffer},
-        nullptr);
-    graphics_queue.waitIdle();
-
-    // NOTE: if you're transfering multiple datas at once then using fences
-    // gives the driver more optimisation opportunities
+    BufferUtil::copy_buffer(
+        device, graphics_queue, command_pool, ret_vertex_buffer, vertex_buffer,
+        BufferUtil::BufferCopyData{.buff_size = vertex_buffer_size});
   }
 
   void wipeSwapChain() {
