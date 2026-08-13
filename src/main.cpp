@@ -1,6 +1,7 @@
 #include "buffers/buffer_copy.hh"
 #include "device/helpers.hh"
 #include "glfw/glfw_window_handler.hh"
+#include "shaders/shader_utils.hh"
 #include "vulkan/vulkan.hpp"
 #include <fstream>
 #include <limits>
@@ -646,8 +647,14 @@ private:
       throw std::runtime_error(
           "Tried to create a graphics pipeline before device was initialised");
 
-    auto shader_bytecode = read_shader("shaders/slang.spv");
-    vk::raii::ShaderModule shader_module = createShaderModule(shader_bytecode);
+    auto maybe_shader_bytecode = ShaderUtils::read_shader("shaders/slang.spv");
+
+    if (!maybe_shader_bytecode)
+      throw std::runtime_error(maybe_shader_bytecode.error());
+
+    vk::raii::ShaderModule shader_module =
+        ShaderUtils::map_shader_bytes_to_shader_module(
+            maybe_shader_bytecode.value(), device);
 
     // To use the shader, the pipeline stages need to be assigned via a
     // structure

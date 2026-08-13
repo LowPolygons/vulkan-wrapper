@@ -44,6 +44,7 @@ add_executable(vulkan_app
     src/swapchain/swapchain_info_container.cc
     src/buffers/buffer_copy.cc
     src/buffers/data_buffer_container.cc
+    src/shaders/shader_utils.cc
     src/main.cpp
 )
 
