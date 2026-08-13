@@ -190,9 +190,9 @@ private:
     std::tie(index_buffer, index_buffer_memory) =
         std::move(gpu_maybe_success.value());
 
-    BufferUtil::copy_buffer(
+    BufferUtils::copy_host_buffer_to_gpu_buffer(
         device, graphics_queue, command_pool, staging_buff, index_buffer,
-        BufferUtil::BufferCopyData{.buff_size = index_buffer_size});
+        BufferUtils::BufferCopyData{.buff_size = index_buffer_size});
     // copyBuffer(staging_buff, index_buffer, index_buffer_size);
   }
 
@@ -247,9 +247,9 @@ private:
     std::tie(vertex_buffer, vertex_buffer_memory) =
         std::move(gpu_maybe_success.value());
 
-    BufferUtil::copy_buffer(
+    BufferUtils::copy_host_buffer_to_gpu_buffer(
         device, graphics_queue, command_pool, ret_vertex_buffer, vertex_buffer,
-        BufferUtil::BufferCopyData{.buff_size = vertex_buffer_size});
+        BufferUtils::BufferCopyData{.buff_size = vertex_buffer_size});
   }
 
   void wipeSwapChain() {

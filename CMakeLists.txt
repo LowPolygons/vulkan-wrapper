@@ -43,6 +43,7 @@ add_executable(vulkan_app
     src/instance_and_surface/instance_and_surface_container.cc
     src/swapchain/swapchain_info_container.cc
     src/buffers/buffer_copy.cc
+    src/buffers/data_buffer_container.cc
     src/main.cpp
 )
 
