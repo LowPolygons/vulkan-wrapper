@@ -2,6 +2,14 @@
 
 This serves less as a README for using the script, and more for documenting my understanding of how it works
 
+# Install
+
+This program requires C++23 and CMake 3.28
+
+Also, run the `install_vulkan_sdk.sh` script in the directory you want the VulkanSDK to be installed
+
+Lastly, to source all environment variables, run `source [INSTALL_DIR]/[SDK_VERSION]/setup-env.sh`
+
 # What Happens
 
 There are 11 steps in the initialisation phase
