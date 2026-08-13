@@ -132,7 +132,7 @@ float3 get_norm_ray_direction(float width, float height, float2 input_pos)
     float x = (input_pos.x - width / 2.0) * pixel_increment_x;
     float y = (height / 2.0 - input_pos.y) * pixel_increment_y;
 
-    return normalize(float3(-1.0, y, x));
+    return normalize(float3(x, y, 1.0));
 }
 
 [shader("vertex")]
@@ -193,7 +193,7 @@ float4 fragMain(VertexOutput inVert) : SV_Target
 
     float3 ray_dir = get_norm_ray_direction(properties.win_x, properties.win_y, { inVert.sv_position[0], inVert.sv_position[1] });
 
-    float3 ray_position = float3(4, 0.0, 0);
+    float3 ray_position = float3(0.0, 0.0, -4.0);
 
     for (int i = 0; i < 10000; i++)
     {
@@ -212,9 +212,6 @@ float4 fragMain(VertexOutput inVert) : SV_Target
             normal = (normal + 1.0) / 2.0;
 
             return float4(normal, 1.0);
-
-            // float brightness = dot(normal, normalize(light_dir));
-            // return float4(abs(normal) * brightness, 1.0);
         }
 
         if (distance >= TOO_FAR)

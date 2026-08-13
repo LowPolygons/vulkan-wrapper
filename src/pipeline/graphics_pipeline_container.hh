@@ -41,8 +41,8 @@ public:
   auto layout() -> vk::raii::PipelineLayout &;
   auto pipeline() -> vk::raii::Pipeline &;
 
-  auto create(PipelineContainerCreateInfo info, vk::raii::Device &device,
-              vk::SurfaceFormatKHR &surface_format)
+  static auto create(PipelineContainerCreateInfo info, vk::raii::Device &device,
+                     vk::SurfaceFormatKHR &surface_format)
       -> std::expected<PipelineContainer, std::string>;
 
 private:

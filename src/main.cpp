@@ -1260,6 +1260,7 @@ private:
   vk::raii::DeviceMemory index_buffer_memory = nullptr;
 
   std::vector<vk::raii::CommandBuffer> command_buffers;
+
   std::vector<vk::raii::Semaphore> present_complete_semaphores;
   std::vector<vk::raii::Semaphore> render_finished_semaphores;
   std::vector<vk::raii::Fence> draw_fences;
