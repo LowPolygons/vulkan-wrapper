@@ -45,6 +45,7 @@ add_executable(vulkan_app
     src/buffers/buffer_copy.cc
     src/buffers/data_buffer_container.cc
     src/shaders/shader_utils.cc
+    src/pipeline/graphics_pipeline_container.cc
     src/main.cpp
 )
 
