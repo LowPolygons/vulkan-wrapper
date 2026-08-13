@@ -39,7 +39,7 @@ endfunction()
 add_executable(vulkan_app
     src/glfw/glfw_window_handler.cc
     src/device/helpers.cc
-    src/device/device_container.cc
+    src/device/device_and_queue_container.cc
     src/instance_and_surface/instance_and_surface_container.cc
     src/swapchain/swapchain_info_container.cc
     src/buffers/buffer_copy.cc

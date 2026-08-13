@@ -1244,6 +1244,7 @@ private:
   // Useful for specifying push contstants too
   vk::raii::PipelineLayout pipeline_layout = nullptr;
   vk::raii::Pipeline grapics_pipeline = nullptr;
+
   vk::raii::CommandPool command_pool = nullptr;
 
   vk::raii::Buffer vertex_buffer = nullptr;
