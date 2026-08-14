@@ -48,6 +48,7 @@ add_executable(vulkan_app
     src/pipeline/graphics_pipeline_container.cc
     src/buffers/command_buffer_container.cc
     src/buffers/command_buffer_container.cc
+    src/buffers/transition_buffer_layout.cc
     src/main.cpp
 )
 
