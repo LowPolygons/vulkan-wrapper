@@ -26,3 +26,8 @@ auto BufferUtils::CommandPoolAndBuffersContainer::create(
 
   return object;
 }
+
+auto BufferUtils::CommandPoolAndBuffersContainer::get_buffer_ref(
+    std::size_t index) -> vk::raii::CommandBuffer & {
+  return _command_buffers[index];
+}

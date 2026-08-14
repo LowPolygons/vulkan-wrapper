@@ -13,7 +13,7 @@ struct VulkanInstanceAndSurfaceCreateInfo {
   vk::ApplicationInfo app_info;
   bool validation_layers_enabled;
   std::vector<const char *> validation_layers;
-  std::vector<const char *> additional_etensions;
+  std::vector<const char *> additional_extensions;
 };
 
 class VulkanInstanceAndSurface {

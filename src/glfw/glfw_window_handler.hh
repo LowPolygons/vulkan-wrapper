@@ -24,6 +24,7 @@ public:
   ~GlfwWindowContainer();
 
   auto get() -> std::weak_ptr<GLFWwindow>;
+  auto shared_get() -> std::shared_ptr<GLFWwindow>;
 
 private:
   std::shared_ptr<GLFWwindow> window = nullptr;

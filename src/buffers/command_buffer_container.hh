@@ -1,7 +1,6 @@
 #ifndef VULKAN_WRAPPER_BUFFERS_COMMAND_BUFFER_CONTAINER_HH
 #define VULKAN_WRAPPER_BUFFERS_COMMAND_BUFFER_CONTAINER_HH
 
-#include "vulkan/vulkan.hpp"
 #include <cstddef>
 #include <expected>
 #include <vulkan/vulkan_raii.hpp>
@@ -9,7 +8,6 @@ namespace BufferUtils {
 
 struct CommandBufferContainerCreateInfo {
   std::size_t num_frames_in_flight;
-  vk::ClearValue clear_colour;
 };
 
 class CommandPoolAndBuffersContainer {
@@ -17,8 +15,7 @@ public:
   CommandPoolAndBuffersContainer() = delete;
 
   auto command_pool() -> vk::raii::CommandPool &;
-  auto get_buffer_ref(std::size_t index)
-      -> std::expected<vk::raii::CommandBuffer &, std::string>;
+  auto get_buffer_ref(std::size_t index) -> vk::raii::CommandBuffer &;
 
   static auto create(CommandBufferContainerCreateInfo info,
                      vk::raii::Device &device, uint32_t queue_index)

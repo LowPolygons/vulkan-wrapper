@@ -23,6 +23,11 @@ public:
 
   DeviceAndQueueContainer() = delete;
 
+  auto physical() -> const vk::raii::PhysicalDevice &;
+  auto logical() -> const vk::raii::Device &;
+  auto queue() -> const vk::raii::Queue &;
+  auto queue_index() -> uint32_t;
+
 private:
   DeviceAndQueueContainer(vk::raii::PhysicalDevice &&physical_device,
                           vk::raii::Device &&logical_device,
@@ -30,11 +35,6 @@ private:
       : physical_device(std::move(physical_device)),
         logical_device(std::move(logical_device)),
         graphics_queue(std::move(queue)), queue_index_var(queue_index) {}
-
-  auto physical() -> const vk::raii::PhysicalDevice &;
-  auto logical() -> const vk::raii::Device &;
-  auto queue() -> const vk::raii::Queue &;
-  auto queue_index() -> uint32_t;
 
 private:
   vk::raii::PhysicalDevice physical_device;
