@@ -74,13 +74,7 @@ template <typename VBT, typename IT, typename FPC> struct VulkanWrapper {
   uint32_t current_frame_index = 0;
 
   auto draw_frame(FPC push_constants) -> std::expected<void, std::string>;
-
   auto recreate_swap_chain() -> std::expected<void, std::string>;
-
-  // ~VulkanWrapper<VBT, IT, FPC>() {
-  //   glfwDestroyWindow(window_container);
-  //   glfwTerminate();
-  // }
 
 private:
   auto record_command_buffer(uint32_t image_index, FPC &push_constants) -> void;
