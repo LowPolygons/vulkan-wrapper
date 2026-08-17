@@ -164,10 +164,10 @@ auto create_vulkan_wrapper(GLFWwindow *glfw_window, VulkanAppMetadata app_data,
 
   auto maybe_data_buffer_container = DataBufferContainer<VBT, IT>::create(
       BufferUtils::BufferContainerCreateInfo<VBT, IT>{
-          .index_data = indices,
+          .num_vertices = vertices.size(),
           .num_indices = indices.size(),
           .vertex_data = vertices,
-          .num_vertices = vertices.size()},
+          .index_data = indices},
       BufferUtils::DeviceBundleRefs{
           .physical_ref = vulkan_wrapper_device_and_queue.physical(),
           .logical_ref = vulkan_wrapper_device_and_queue.logical(),
@@ -307,13 +307,6 @@ auto VulkanWrapper<VBT, IT, FPC>::recreate_swap_chain()
   return {};
 }
 
-// TODO: I want a 'PersistantStorageContainer' and a 'PushConstant' class
-// somehow passed in. Question is, how does this work for potentially multiple
-// push constant ranges?
-//
-// this is an Implementation: perhaps the best solution is to just pass
-// whatever push constant classes i want and have one PersistantStorageContainer
-// that maps to both
 template <typename VBT, typename IT, typename FPC>
 auto VulkanWrapper<VBT, IT, FPC>::record_command_buffer(uint32_t image_index,
                                                         FPC &push_constants)

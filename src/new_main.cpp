@@ -2,6 +2,7 @@
 #include "vulkan/vulkan.hpp"
 #include "vulkan_engine.hh"
 
+#include <GLFW/glfw3.h>
 #include <cstdlib>
 #include <iostream>
 #include <vulkan/vulkan.hpp>
@@ -82,7 +83,7 @@ auto main() -> int {
               .binding_description = ShaderVertex::get_binding_descriptions(),
               .attribute_descriptions =
                   ShaderVertex::get_attribute_descriptions(),
-              .screen_region = {0, 0, 800, 800, 0, 1},
+              .screen_region = {0, 0, 800, 600, 0, 1},
               .image_slice = {vk::Offset2D(0, 0), {800, 600}},
               .polygon_mode = vk::PolygonMode::eFill,
               .cull_mode = vk::CullModeFlagBits::eBack,
@@ -95,9 +96,7 @@ auto main() -> int {
               .push_constant_ranges = {vk::PushConstantRange{
                   .stageFlags = vk::ShaderStageFlagBits::eFragment,
                   .offset = 0,
-                  .size = sizeof(ImageProperties)}}
-
-          },
+                  .size = sizeof(ImageProperties)}}},
       .clear_colour = vk::ClearColorValue(0.0f, 0.0f, 0.0f, 1.0f)};
 
   glfwInit();
@@ -109,17 +108,19 @@ auto main() -> int {
       glfwCreateWindow(app_data.width, app_data.height,
                        app_data.app_name.c_str(), nullptr, nullptr);
 
-  auto vulkan_wrapper =
+  auto maybe_vulkan_wrapper =
       Implementation::create_vulkan_wrapper<ShaderVertex, uint16_t,
                                             ImageProperties>(
           glfw_window, app_data,
-          vk::ApplicationInfo{.pApplicationName = "Hello World Triangle",
+          vk::ApplicationInfo{.pApplicationName = app_data.app_name.c_str(),
                               .applicationVersion = VK_MAKE_VERSION(1, 0, 0),
                               .apiVersion = vk::ApiVersion13},
           vertices, indices);
 
-  if (!vulkan_wrapper)
-    return PrintError("Fail On Init: " + vulkan_wrapper.error());
+  if (!maybe_vulkan_wrapper)
+    return PrintError("Fail On Init: " + maybe_vulkan_wrapper.error());
+
+  auto vulkan_wrapper = std::move(maybe_vulkan_wrapper.value());
 
   auto power = float{0};
 
@@ -128,16 +129,19 @@ auto main() -> int {
 
     ImageProperties push_consts{
         .win_x = static_cast<float>(
-            vulkan_wrapper.value().swapchain_container.dimensions().width),
+            vulkan_wrapper.swapchain_container.dimensions().width),
         .win_y = static_cast<float>(
-            vulkan_wrapper.value().swapchain_container.dimensions().height),
+            vulkan_wrapper.swapchain_container.dimensions().height),
         .power = 10 * std::sin(power)};
 
     glfwPollEvents();
 
-    auto status = vulkan_wrapper.value().draw_frame(push_consts);
+    auto status = vulkan_wrapper.draw_frame(push_consts);
 
     if (!status)
       return PrintError("Draw frame function failed: " + status.error());
   }
+
+  glfwDestroyWindow(glfw_window);
+  glfwTerminate();
 }

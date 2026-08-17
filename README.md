@@ -10,6 +10,8 @@ Also, run the `install_vulkan_sdk.sh` script in the directory you want the Vulka
 
 Lastly, to source all environment variables, run `source [INSTALL_DIR]/[SDK_VERSION]/setup-env.sh`
 
+![Mandelbulb](mandelbulb.png)
+
 # What Happens
 
 There are 11 steps in the initialisation phase
