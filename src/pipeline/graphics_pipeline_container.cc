@@ -1,5 +1,15 @@
 
 #include "graphics_pipeline_container.hh"
+#include <vulkan/vulkan_raii.hpp>
+
+auto GraphicsPipeline::PipelineContainer::pipeline() -> vk::raii::Pipeline & {
+  return _pipeline;
+}
+
+auto GraphicsPipeline::PipelineContainer::layout()
+    -> vk::raii::PipelineLayout & {
+  return _layout;
+}
 
 auto GraphicsPipeline::PipelineContainer::create(
     PipelineContainerCreateInfo info, vk::raii::Device &device,

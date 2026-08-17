@@ -23,9 +23,9 @@ public:
 
   DeviceAndQueueContainer() = delete;
 
-  auto physical() -> const vk::raii::PhysicalDevice &;
-  auto logical() -> const vk::raii::Device &;
-  auto queue() -> const vk::raii::Queue &;
+  auto physical() -> vk::raii::PhysicalDevice &;
+  auto logical() -> vk::raii::Device &;
+  auto queue() -> vk::raii::Queue &;
   auto queue_index() -> uint32_t;
 
 private:

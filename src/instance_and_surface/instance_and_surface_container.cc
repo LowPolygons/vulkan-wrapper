@@ -13,8 +13,7 @@ auto InstanceAndSurface::VulkanInstanceAndSurface::surface()
 
 auto InstanceAndSurface::VulkanInstanceAndSurface::create(
     VulkanInstanceAndSurfaceCreateInfo info,
-    const vk::raii::Context &context_ref,
-    const std::shared_ptr<GLFWwindow> window)
+    const vk::raii::Context &context_ref, GLFWwindow *window)
     -> std::expected<VulkanInstanceAndSurface, std::string> {
 
   auto required_layers = std::vector<const char *>{};
@@ -43,8 +42,8 @@ auto InstanceAndSurface::VulkanInstanceAndSurface::create(
       required_window_extensions,
       required_window_extensions + glfw_extension_count};
 
-  for (auto &additional_ext : info.additional_extensions)
-    all_required_extensions.push_back(additional_ext);
+  // for (auto &additional_ext : info.additional_extensions)
+  //   all_required_extensions.push_back(additional_ext);
 
   auto maybe_extensions_validated =
       std::expected<void, std::string>{FactoryHelper::validate_extensions(
@@ -65,8 +64,8 @@ auto InstanceAndSurface::VulkanInstanceAndSurface::create(
 
   // Surface creation is much easier
   auto local_surface = VkSurfaceKHR{};
-  if (glfwCreateWindowSurface(*vk_instance, window.get(), nullptr,
-                              &local_surface) != 0)
+  if (glfwCreateWindowSurface(*vk_instance, window, nullptr, &local_surface) !=
+      0)
     return std::unexpected("Failed to create a window surface");
 
   auto surface = vk::raii::SurfaceKHR(vk_instance, local_surface);

@@ -22,6 +22,7 @@ struct BufferContainerCreateInfo {
 struct BufferAndDeviceMemory {
   vk::raii::Buffer buffer;
   vk::raii::DeviceMemory memory;
+  std::size_t size;
 };
 
 struct DeviceBundleRefs {
@@ -78,6 +79,20 @@ auto copy_data_to_host_buffer(vk::raii::DeviceMemory &staging_memory,
 } // namespace FactoryHelper
 
 } // namespace BufferUtils
+  //
+template <typename VBT, typename IT> // Vertex Buffer Type, Index Type
+  requires std::is_arithmetic_v<IT>
+auto BufferUtils::DataBufferContainer<VBT, IT>::indices()
+    -> BufferAndDeviceMemory & {
+  return _indices;
+}
+
+template <typename VBT, typename IT> // Vertex Buffer Type, Index Type
+  requires std::is_arithmetic_v<IT>
+auto BufferUtils::DataBufferContainer<VBT, IT>::vertices()
+    -> BufferAndDeviceMemory & {
+  return _vertices;
+}
 
 template <typename VBT, typename IT> // Vertex Buffer Type, Index Type
   requires std::is_arithmetic_v<IT>
@@ -128,9 +143,11 @@ auto BufferUtils::DataBufferContainer<VBT, IT>::create(
 
   auto object = DataBufferContainer<VBT, IT>(
       BufferAndDeviceMemory{.buffer = std::move(vert_buff),
-                            .memory = std::move(vert_mem)},
+                            .memory = std::move(vert_mem),
+                            .size = vertex_buffer_size},
       BufferAndDeviceMemory{.buffer = std::move(indx_buff),
-                            .memory = std::move(indx_mem)});
+                            .memory = std::move(indx_mem),
+                            .size = index_buffer_size});
   return object;
 }
 

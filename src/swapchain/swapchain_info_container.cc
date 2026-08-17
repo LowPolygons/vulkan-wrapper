@@ -1,4 +1,5 @@
 #include "swapchain_info_container.hh"
+#include <iostream>
 
 auto SwapchainInfo::SwapchainInfoContainer::swap_chain()
     -> vk::raii::SwapchainKHR & {
@@ -22,6 +23,12 @@ auto SwapchainInfo::SwapchainInfoContainer::surface_format()
 
 auto SwapchainInfo::SwapchainInfoContainer::dimensions() -> vk::Extent2D & {
   return _dimensions;
+}
+
+auto SwapchainInfo::SwapchainInfoContainer::wipe() -> void {
+  _swap_chain = nullptr;
+  _images.clear();
+  _image_views.clear();
 }
 
 auto SwapchainInfo::SwapchainInfoContainer::create(
@@ -52,24 +59,23 @@ auto SwapchainInfo::SwapchainInfoContainer::create(
 
   auto maybe_extent = std::expected<vk::Extent2D, std::string>{};
 
-  if (GLFWwindow *window = object_refs.weak_window.lock().get()) {
-    maybe_extent = std::expected<vk::Extent2D, std::string>{
-        FactoryHelper::choose_extent(surface_capabilities, window)};
+  // if (GLFWwindow *window = object_refs.weak_window.lock().get()) {
+  maybe_extent = std::expected<vk::Extent2D, std::string>{
+      FactoryHelper::choose_extent(surface_capabilities, object_refs.window)};
 
-    if (!maybe_extent)
-      return std::unexpected(maybe_extent.error());
-  } else {
-    return std::unexpected(
-        "Unable to access GLFWwindow weak ptr. Is it still alive?");
+  if (!maybe_extent)
+    return std::unexpected(maybe_extent.error());
+  // } else {
+  //   return std::unexpected(
+  //       "Unable to access GLFWwindow weak ptr. Is it still alive?");
+  // }
+
+  auto image_count = surface_capabilities.minImageCount + 1;
+
+  if (surface_capabilities.maxImageCount > 0 &&
+      image_count > surface_capabilities.maxImageCount) {
+    image_count = surface_capabilities.maxImageCount;
   }
-
-  auto image_count =
-      (surface_capabilities.maxImageCount == 0)
-          ? surface_capabilities.maxImageCount
-          : std::clamp<uint32_t>(surface_capabilities.maxImageCount + 1,
-                                 surface_capabilities.minImageCount,
-                                 surface_capabilities.maxImageCount);
-
   auto swap_chain_create_info = vk::SwapchainCreateInfoKHR{
       .surface = *object_refs.surface_ref,
       .minImageCount = image_count,
@@ -88,6 +94,9 @@ auto SwapchainInfo::SwapchainInfoContainer::create(
   auto swap_chain =
       vk::raii::SwapchainKHR(object_refs.device_ref, swap_chain_create_info);
   auto images = swap_chain.getImages();
+
+  std::cout << "Images size: " << images.size() << std::endl;
+
   auto surface_format = maybe_chosen_surface.value();
   auto extent = maybe_extent.value();
 
@@ -164,8 +173,8 @@ auto SwapchainInfo::FactoryHelper::get_image_views(
     std::vector<vk::Image> &images, vk::SurfaceFormatKHR surface_format,
     vk::raii::Device &device)
     -> std::expected<std::vector<vk::raii::ImageView>, std::string> {
-  if (images.empty())
-    return std::unexpected("Swap chain images array was empty");
+  // if (images.empty())
+  //   return std::unexpected("Swap chain images array was empty");
 
   auto image_view_create_info = vk::ImageViewCreateInfo{
       .viewType = vk::ImageViewType::e2D,

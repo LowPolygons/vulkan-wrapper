@@ -21,8 +21,7 @@ public:
   VulkanInstanceAndSurface() = delete;
 
   static auto create(VulkanInstanceAndSurfaceCreateInfo info,
-                     const vk::raii::Context &context_ref,
-                     std::shared_ptr<GLFWwindow> const window)
+                     const vk::raii::Context &context_ref, GLFWwindow *window)
       -> std::expected<VulkanInstanceAndSurface, std::string>;
 
   auto instance() -> vk::raii::Instance &;

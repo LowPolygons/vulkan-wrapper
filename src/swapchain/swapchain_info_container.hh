@@ -14,7 +14,7 @@ struct SwapchainInfoObjectRefs {
   vk::raii::Device &device_ref;
   vk::raii::Queue &graphics_queue_ref;
   vk::raii::SurfaceKHR &surface_ref;
-  std::weak_ptr<GLFWwindow> weak_window;
+  GLFWwindow *window;
 };
 
 struct SwapchainInfoContainerCreateInfo {
@@ -35,6 +35,8 @@ public:
   auto image_views() -> std::vector<vk::raii::ImageView> &;
   auto surface_format() -> vk::SurfaceFormatKHR &;
   auto dimensions() -> vk::Extent2D &;
+
+  auto wipe() -> void;
 
 private:
   SwapchainInfoContainer(vk::raii::SwapchainKHR &&swap_chain,
@@ -66,6 +68,7 @@ auto get_image_views(std::vector<vk::Image> &images,
                      vk::SurfaceFormatKHR surface_format,
                      vk::raii::Device &device)
     -> std::expected<std::vector<vk::raii::ImageView>, std::string>;
+
 } // namespace FactoryHelper
 
 } // namespace SwapchainInfo

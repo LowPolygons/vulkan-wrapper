@@ -3,16 +3,15 @@
 #include <vulkan/vulkan.hpp>
 
 auto DeviceUtil::DeviceAndQueueContainer::physical()
-    -> const vk::raii::PhysicalDevice & {
+    -> vk::raii::PhysicalDevice & {
   return this->physical_device;
 }
 
-auto DeviceUtil::DeviceAndQueueContainer::logical()
-    -> const vk::raii::Device & {
+auto DeviceUtil::DeviceAndQueueContainer::logical() -> vk::raii::Device & {
   return this->logical_device;
 }
 
-auto DeviceUtil::DeviceAndQueueContainer::queue() -> const vk::raii::Queue & {
+auto DeviceUtil::DeviceAndQueueContainer::queue() -> vk::raii::Queue & {
   return this->graphics_queue;
 }
 

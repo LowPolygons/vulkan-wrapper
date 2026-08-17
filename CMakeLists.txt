@@ -50,7 +50,7 @@ add_executable(vulkan_app
     src/buffers/command_buffer_container.cc
     src/buffers/transition_buffer_layout.cc
     src/syncs/sync_object_container.cc
-    src/main.cpp
+    src/new_main.cpp
 )
 
 
