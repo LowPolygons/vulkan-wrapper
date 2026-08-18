@@ -2,6 +2,8 @@
 #include "graphics_pipeline_container.hh"
 #include <vulkan/vulkan_raii.hpp>
 
+#include "../shaders/shader_utils.hh"
+
 auto GraphicsPipeline::PipelineContainer::pipeline() -> vk::raii::Pipeline & {
   return _pipeline;
 }
@@ -127,7 +129,8 @@ auto GraphicsPipeline::PipelineContainer::create(
       pipeline_info_chain.get<vk::GraphicsPipelineCreateInfo>());
 
   auto object = PipelineContainer(std::move(graphics_pipeline_layout),
-                                  std::move(graphics_pipeline));
+                                  std::move(graphics_pipeline),
+                                  info.screen_region, info.image_slice);
 
   return object;
 }

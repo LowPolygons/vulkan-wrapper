@@ -1,8 +1,6 @@
 #ifndef VULKAN_WRAPPER_PIPELINE_GRAPHICS_PIPELINE_CONTAINER_HH
 #define VULKAN_WRAPPER_PIPELINE_GRAPHICS_PIPELINE_CONTAINER_HH
 
-#include "../shaders/shader_utils.hh"
-
 #include "vulkan/vulkan.hpp"
 #include <expected>
 #include <string>
@@ -47,12 +45,17 @@ public:
 
 private:
   PipelineContainer(vk::raii::PipelineLayout &&layout,
-                    vk::raii::Pipeline &&pipeline)
-      : _layout(std::move(layout)), _pipeline(std::move(pipeline)) {}
+                    vk::raii::Pipeline &&pipeline, vk::Viewport viewport,
+                    vk::Rect2D scissor)
+      : _layout(std::move(layout)), _pipeline(std::move(pipeline)),
+        screen_viewport(viewport), image_scissor(scissor) {}
 
 private:
   vk::raii::PipelineLayout _layout;
   vk::raii::Pipeline _pipeline;
+
+  vk::Viewport screen_viewport;
+  vk::Rect2D image_scissor;
 };
 
 } // namespace GraphicsPipeline
