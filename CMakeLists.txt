@@ -52,7 +52,7 @@ add_executable(vulkan_app
     src/syncs/sync_object_container.cc
     src/wrapper_boilerplate.cc
     src/mandelbulb_app.cc
-    src/new_new_main.cpp
+    src/main.cpp
 )
 
 
@@ -71,7 +71,4 @@ target_compile_definitions(vulkan_app PRIVATE
     VULKAN_HPP_NO_STRUCT_CONSTRUCTORS
     # IMPERATIVE if you want to be able to resize without crashing
     VULKAN_HPP_HANDLE_ERROR_OUT_OF_DATE_AS_SUCCESS
-)
-target_compile_definitions(vulkan_app PRIVATE
-    VULKAN_APP_SHADER_PATH="${CMAKE_CURRENT_LIST_DIR}/shaders"
 )

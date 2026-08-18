@@ -24,11 +24,6 @@ GlfwWindowContainer::GlfwWindowContainer(
   }
 }
 
-// GlfwWindowContainer::~GlfwWindowContainer() {
-//   std::cout << "Destroyed GLFW instance" << std::endl;
-//   glfwTerminate();
-// }
-
 auto GlfwWindowContainer::get() -> std::weak_ptr<GLFWwindow> { return window; }
 
 auto GlfwWindowContainer::shared_get() -> std::shared_ptr<GLFWwindow> {
