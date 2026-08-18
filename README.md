@@ -1,5 +1,8 @@
 # Vulkan Implementation
 
+## TODO
+DeviceAndQueueContainer needs a flag to specify if the root needs graphics, compute or both
+
 Theoretical idea:
 
 ## VulkanRoot

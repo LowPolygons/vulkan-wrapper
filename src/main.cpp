@@ -1252,7 +1252,7 @@ int main() {
     throw std::runtime_error("Could not find shaders directory");
 
   try {
-    GlfwWindowContainer container({WIDTH, HEIGHT}, "Test GLFW Window");
+    GlfwWindowContainer container({WIDTH, HEIGHT}, "Test GLFW Window", true);
     HelloTriangleApplication app(&container);
 
     app.run();

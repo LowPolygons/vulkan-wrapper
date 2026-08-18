@@ -3,12 +3,14 @@
 #include <iostream>
 
 GlfwWindowContainer::GlfwWindowContainer(
-    std::pair<uint32_t, uint32_t> dimensions, std::string window_name) {
+    std::pair<uint32_t, uint32_t> dimensions, std::string window_name,
+    bool resizable) {
 
   glfwInit();
 
   glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API); // no opengl
-  glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
+  auto resize_status = resizable ? GLFW_TRUE : GLFW_FALSE;
+  glfwWindowHint(GLFW_RESIZABLE, resize_status);
 
   window = std::shared_ptr<GLFWwindow>(
       glfwCreateWindow(dimensions.first, dimensions.second, window_name.c_str(),
@@ -22,10 +24,10 @@ GlfwWindowContainer::GlfwWindowContainer(
   }
 }
 
-GlfwWindowContainer::~GlfwWindowContainer() {
-  std::cout << "Destroyed GLFW instance" << std::endl;
-  glfwTerminate();
-}
+// GlfwWindowContainer::~GlfwWindowContainer() {
+//   std::cout << "Destroyed GLFW instance" << std::endl;
+//   glfwTerminate();
+// }
 
 auto GlfwWindowContainer::get() -> std::weak_ptr<GLFWwindow> { return window; }
 

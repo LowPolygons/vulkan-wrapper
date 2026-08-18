@@ -50,7 +50,7 @@ struct ShaderVertex {
 
 const std::vector<ShaderVertex> vertices = {
     {{-1.0, -1.0}, {0.0, 0.0, 0.0}, 5.0},
-    {{1.0, -1.0}, {1.0, 0.0, 0.0}, 5.0},
+    {{0.0, -1.0}, {1.0, 0.0, 0.0}, 5.0},
     {{1.0, 1.0}, {0.0, 1.0, 0.0}, 5.0},
     {{-1.0, 1.0}, {0.0, 0.0, 1.0}, 5.0}};
 
@@ -97,7 +97,7 @@ auto main() -> int {
                   .stageFlags = vk::ShaderStageFlagBits::eFragment,
                   .offset = 0,
                   .size = sizeof(ImageProperties)}}},
-      .clear_colour = vk::ClearColorValue(0.0f, 0.0f, 0.0f, 1.0f)};
+      .clear_colour = vk::ClearColorValue(1.0f, 0.0f, 0.0f, 1.0f)};
 
   glfwInit();
 

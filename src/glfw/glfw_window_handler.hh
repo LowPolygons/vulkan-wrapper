@@ -20,8 +20,7 @@
 class GlfwWindowContainer {
 public:
   GlfwWindowContainer(std::pair<uint32_t, uint32_t> dimensions,
-                      std::string window_name);
-  ~GlfwWindowContainer();
+                      std::string window_name, bool resizable);
 
   auto get() -> std::weak_ptr<GLFWwindow>;
   auto shared_get() -> std::shared_ptr<GLFWwindow>;
