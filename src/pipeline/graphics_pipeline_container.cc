@@ -15,7 +15,8 @@ auto GraphicsPipeline::PipelineContainer::layout()
 
 auto GraphicsPipeline::PipelineContainer::create(
     PipelineContainerCreateInfo info, vk::raii::Device &device,
-    vk::SurfaceFormatKHR &surface_format)
+    vk::SurfaceFormatKHR &surface_format,
+    vk::raii::DescriptorSetLayout *descriptor_set_layout)
     -> std::expected<PipelineContainer, std::string> {
   if (device == nullptr)
     return std::unexpected(
@@ -80,7 +81,7 @@ auto GraphicsPipeline::PipelineContainer::create(
       .rasterizerDiscardEnable = vk::False,
       .polygonMode = info.polygon_mode,
       .cullMode = info.cull_mode,
-      .frontFace = vk::FrontFace::eClockwise,
+      .frontFace = info.front_face,
       .depthBiasEnable = vk::False,
       .lineWidth = 1.0f};
 
@@ -93,10 +94,21 @@ auto GraphicsPipeline::PipelineContainer::create(
   // TODO: To be looked into
   vk::PipelineDepthStencilStateCreateInfo *depth_stencil_info = nullptr;
 
-  auto pipeline_layout_create_info = vk::PipelineLayoutCreateInfo{
-      .pushConstantRangeCount =
-          static_cast<uint32_t>(info.push_constant_ranges.size()),
-      .pPushConstantRanges = info.push_constant_ranges.data()};
+  auto pipeline_layout_create_info = vk::PipelineLayoutCreateInfo{};
+
+  if (info.maybe_push_constant_ranges.has_value()) {
+    pipeline_layout_create_info.pushConstantRangeCount =
+        static_cast<uint32_t>(info.maybe_push_constant_ranges.value().size());
+    pipeline_layout_create_info.pPushConstantRanges =
+        info.maybe_push_constant_ranges.value().data();
+  }
+
+  if (descriptor_set_layout != nullptr) {
+    pipeline_layout_create_info.setLayoutCount = 1;
+    // Typical usage requries a pointer dereference and then a reference, so it
+    // needs a double pointer deref here
+    pipeline_layout_create_info.pSetLayouts = &**descriptor_set_layout;
+  }
 
   auto graphics_pipeline_layout =
       vk::raii::PipelineLayout(device, pipeline_layout_create_info);

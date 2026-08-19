@@ -26,10 +26,11 @@ struct PipelineContainerCreateInfo {
   // Render Info
   vk::PolygonMode polygon_mode;
   vk::CullModeFlagBits cull_mode;
+  vk::FrontFace front_face;
 
   vk::PipelineColorBlendStateCreateInfo colour_blend_data;
 
-  std::vector<vk::PushConstantRange> push_constant_ranges;
+  std::optional<std::vector<vk::PushConstantRange>> maybe_push_constant_ranges;
 };
 
 class PipelineContainer {
@@ -40,7 +41,8 @@ public:
   auto pipeline() -> vk::raii::Pipeline &;
 
   static auto create(PipelineContainerCreateInfo info, vk::raii::Device &device,
-                     vk::SurfaceFormatKHR &surface_format)
+                     vk::SurfaceFormatKHR &surface_format,
+                     vk::raii::DescriptorSetLayout *descriptor_set_layout)
       -> std::expected<PipelineContainer, std::string>;
 
 private:

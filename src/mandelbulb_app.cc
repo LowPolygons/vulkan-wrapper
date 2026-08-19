@@ -12,7 +12,7 @@ auto MandelbulbApp::create(MandelbulbAppCreateInfo info, VulkanRoot &root,
     -> std::expected<MandelbulbApp, std::string> {
   auto maybe_pipeline_container = GraphicsPipeline::PipelineContainer::create(
       info.pipeline_details, root.device_and_queue.logical(),
-      root.swapchain_info.surface_format());
+      root.swapchain_info.surface_format(), nullptr);
 
   if (!maybe_pipeline_container)
     return std::unexpected("Mandelbulb App Pipeline Container Init Error: " +
@@ -207,4 +207,52 @@ auto MandelbulbApp::record_command_buffer(
       vk::PipelineStageFlagBits2::eBottomOfPipe);
 
   command_buffer.end();
+}
+
+auto create_mandelbulb_app(VulkanRoot &vulkan_root)
+    -> std::expected<MandelbulbApp, std::string> {
+
+  auto app_colour_blend_data = vk::PipelineColorBlendAttachmentState{
+      .blendEnable = vk::False,
+      .colorWriteMask =
+          vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG |
+          vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA};
+
+  auto app_create_info = MandelbulbAppCreateInfo{
+      .pipeline_details =
+          GraphicsPipeline::PipelineContainerCreateInfo{
+              .vertex_shader_path = "shaders/frag_shader.spv",
+              .frag_shader_path = "shaders/frag_shader.spv",
+              .vertex_main_func_name = "vertMain",
+              .frag_main_func_name = "fragMain",
+              .binding_description = ShaderVertex::get_binding_descriptions(),
+              .attribute_descriptions =
+                  ShaderVertex::get_attribute_descriptions(),
+              .screen_region = {0, 0, 800, 600, 0, 1},
+              .image_slice = {vk::Offset2D(0, 0), {800, 600}},
+              .polygon_mode = vk::PolygonMode::eFill,
+              .cull_mode = vk::CullModeFlagBits::eBack,
+              .front_face = vk::FrontFace::eClockwise,
+              .colour_blend_data =
+                  vk::PipelineColorBlendStateCreateInfo{
+                      .logicOpEnable = vk::False,
+                      .logicOp = vk::LogicOp::eClear,
+                      .attachmentCount = 1,
+                      .pAttachments = &app_colour_blend_data},
+              .maybe_push_constant_ranges = std::vector{vk::PushConstantRange{
+                  .stageFlags = vk::ShaderStageFlagBits::eFragment,
+                  .offset = 0,
+                  .size = sizeof(MandelbulbFragPushConstants)}},
+          },
+      .default_colour = vk::ClearColorValue(0.0, 0.0, 0.0, 1.0f),
+      .max_frames_in_flight = 2};
+
+  auto maybe_app = MandelbulbApp::create(app_create_info, vulkan_root,
+                                         {{{-1.0, -1.0}, {0.0, 0.0, 0.0}, 5.0},
+                                          {{1.0, -1.0}, {1.0, 0.0, 0.0}, 5.0},
+                                          {{1.0, 1.0}, {0.0, 1.0, 0.0}, 5.0},
+                                          {{-1.0, 1.0}, {0.0, 0.0, 1.0}, 5.0}},
+                                         {0, 1, 2, 2, 3, 0});
+
+  return maybe_app;
 }

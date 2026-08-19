@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(SHADER_SLANG_SOURCES
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/shaders/shader.slang
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/shaders/3d_app_shader.slang
 )
 message(STATUS "Shader sources: ${SHADER_SLANG_SOURCES}")
 
@@ -26,14 +26,14 @@ function (add_slang_shader_target TARGET)
         COMMAND ${CMAKE_COMMAND} -E make_directory ${SHADERS_DIR}
     )
   add_custom_command (
-          OUTPUT  ${SHADERS_DIR}/slang.spv
-          COMMAND ${SLANGC_EXECUTABLE} ${SHADER_SOURCES} -target spirv -profile spirv_1_4 -emit-spirv-directly -fvk-use-entrypoint-name ${ENTRY_POINTS} -o slang.spv
+          OUTPUT  ${SHADERS_DIR}/3d_shader.spv
+          COMMAND ${SLANGC_EXECUTABLE} ${SHADER_SOURCES} -target spirv -profile spirv_1_4 -emit-spirv-directly -fvk-use-entrypoint-name ${ENTRY_POINTS} -o 3d_shader.spv
           WORKING_DIRECTORY ${SHADERS_DIR}
           DEPENDS ${SHADERS_DIR} ${SHADER_SOURCES}
           COMMENT "Compiling Slang Shaders"
           VERBATIM
   )
-  add_custom_target (${TARGET} DEPENDS ${SHADERS_DIR}/slang.spv)
+  add_custom_target (${TARGET} DEPENDS ${SHADERS_DIR}/3d_shader.spv)
 endfunction()
 
 add_executable(vulkan_app
@@ -52,6 +52,7 @@ add_executable(vulkan_app
     src/syncs/sync_object_container.cc
     src/wrapper_boilerplate.cc
     src/mandelbulb_app.cc
+    src/3d_app.cc
     src/main.cpp
 )
 
