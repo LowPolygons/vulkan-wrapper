@@ -57,7 +57,7 @@ auto MandelbulbApp::create(MandelbulbAppCreateInfo info, VulkanRoot &root,
       info.max_frames_in_flight, root.device_and_queue.logical());
 
   if (!maybe_sync_objects)
-    return std::unexpected("MandelbulbA App Sync Objects Init Error: " +
+    return std::unexpected("Mandelbulb App Sync Objects Init Error: " +
                            maybe_sync_objects.error());
 
   auto extracted_sync_objects = std::move(maybe_sync_objects.value());
@@ -74,13 +74,15 @@ auto MandelbulbApp::get_current_state(
     std::shared_ptr<GLFWwindow> window, vk::raii::Device &logical_device,
     SwapchainInfo::SwapchainInfoContainer &swapchain_state)
     -> std::expected<std::optional<VulkanAppTickState>, std::string> {
-  //=// This shader expects a Push constant of type ImageProperties
+  //=// This shader expects a Push constant of type MandelbulbFragPushConstants
   morph_mandelbulb();
 
   auto push_constants = MandelbulbFragPushConstants{
       .win_x = static_cast<float>(swapchain_state.dimensions().width),
       .win_y = static_cast<float>(swapchain_state.dimensions().height),
-      .power = 10 * std::sin(mandelbulb_power)};
+      .power = mandelbulb_power, // 10 * std::sin(mandelbulb_power),
+      .__padding = 0.0,
+      .ray_origin = {0.0, 0.0, -4.4}};
 
   //=// Vulkan Jargon
   auto &fence_ref = sync_objects.fence(current_frame_index);

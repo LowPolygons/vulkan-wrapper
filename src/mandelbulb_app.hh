@@ -6,6 +6,7 @@
 #include "pipeline/graphics_pipeline_container.hh"
 #include "syncs/sync_object_container.hh"
 #include "wrapper_boilerplate.hh"
+#include <glm/ext/vector_float3.hpp>
 #include <glm/glm.hpp>
 
 struct ShaderVertex {
@@ -40,10 +41,13 @@ struct ShaderVertex {
                  .offset = offsetof(ShaderVertex, number)}}};
   }
 };
+
 struct MandelbulbFragPushConstants {
   glm::f32 win_x;
   glm::f32 win_y;
   glm::f32 power;
+  glm::f32 __padding = 0.0;
+  glm::vec3 ray_origin;
 };
 
 struct MandelbulbAppCreateInfo {
