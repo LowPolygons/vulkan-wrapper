@@ -13,6 +13,20 @@ auto GraphicsPipeline::PipelineContainer::layout()
   return _layout;
 }
 
+auto GraphicsPipeline::PipelineContainer::viewport() -> vk::Viewport {
+  return screen_viewport;
+}
+auto GraphicsPipeline::PipelineContainer::scissor() -> vk::Rect2D {
+  return image_scissor;
+}
+auto GraphicsPipeline::PipelineContainer::update_dynamic_objects(
+    vk::Extent2D &swapchain_image_size) -> void {
+  screen_viewport.setWidth(swapchain_image_size.width);
+  screen_viewport.setHeight(swapchain_image_size.height);
+
+  image_scissor.setExtent(swapchain_image_size);
+}
+
 auto GraphicsPipeline::PipelineContainer::create(
     PipelineContainerCreateInfo info, vk::raii::Device &device,
     vk::SurfaceFormatKHR &surface_format,
@@ -96,11 +110,11 @@ auto GraphicsPipeline::PipelineContainer::create(
 
   auto pipeline_layout_create_info = vk::PipelineLayoutCreateInfo{};
 
-  if (info.maybe_push_constant_ranges.has_value()) {
+  if (!info.push_constant_ranges.empty()) {
     pipeline_layout_create_info.pushConstantRangeCount =
-        static_cast<uint32_t>(info.maybe_push_constant_ranges.value().size());
+        static_cast<uint32_t>(info.push_constant_ranges.size());
     pipeline_layout_create_info.pPushConstantRanges =
-        info.maybe_push_constant_ranges.value().data();
+        info.push_constant_ranges.data();
   }
 
   if (descriptor_set_layout != nullptr) {

@@ -36,6 +36,7 @@ auto main() -> int {
 
   auto vulkan_root = std::move(maybe_vulkan_root.value());
 
+  // auto maybe_app = create_mandelbulb_app(vulkan_root);
   auto maybe_app = create_3d_app(vulkan_root);
 
   if (!maybe_app) {

@@ -1,35 +1,39 @@
 #include "3d_app.hh"
 #include "buffers/transition_buffer_layout.hh"
+#include "buffers/uniform_buffer_container.hh"
 #include "device/helpers.hh"
 #include "vulkan/vulkan.hpp"
 #include <chrono>
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/trigonometric.hpp>
-#include <print>
 #include <vulkan/vulkan_raii.hpp>
 
 auto App3D::create(App3DCreateInfo info, VulkanRoot &root,
                    std::vector<ShaderVertex3D> vertices,
                    std::vector<uint16_t> indices)
     -> std::expected<App3D, std::string> {
-  // TODO: move to function and wrapper class
-  auto uniform_buffer_layout_binding = vk::DescriptorSetLayoutBinding{
-      .binding = 0,
-      .descriptorType = vk::DescriptorType::eUniformBuffer,
-      .descriptorCount = 1,
-      // To be able to be referenced anywhere you can use ::eAllGraphics
-      .stageFlags = vk::ShaderStageFlagBits::eVertex};
+  auto uniform_buffer_create_info =
+      BufferUtils::UniformBufferContainerCreateInfo{
+          .stage = info.buffer_stage,
+          .max_frames_in_flight = info.max_frames_in_flight};
 
-  auto ubo_layout = vk::DescriptorSetLayoutCreateInfo{
-      .bindingCount = 1, .pBindings = &uniform_buffer_layout_binding};
+  auto maybe_uniform_buffer_container =
+      BufferUtils::UniformBufferContainer<App3DUniformBuffer>::create(
+          uniform_buffer_create_info, root.device_and_queue.logical(),
+          root.device_and_queue.physical());
 
-  auto descriptor_set_layout = vk::raii::DescriptorSetLayout(
-      root.device_and_queue.logical(), ubo_layout);
+  if (!maybe_uniform_buffer_container)
+    return std::unexpected("3D App Unifom Buffer Init Error: " +
+                           maybe_uniform_buffer_container.error());
+
+  auto extracted_uniform_buffer_container =
+      std::move(maybe_uniform_buffer_container.value());
 
   auto maybe_pipeline_container = GraphicsPipeline::PipelineContainer::create(
       info.pipeline_details, root.device_and_queue.logical(),
-      root.swapchain_info.surface_format(), &descriptor_set_layout);
+      root.swapchain_info.surface_format(),
+      &extracted_uniform_buffer_container.descriptor_set_layout());
 
   if (!maybe_pipeline_container)
     return std::unexpected("3D App Pipeline Container Init Error: " +
@@ -70,87 +74,6 @@ auto App3D::create(App3DCreateInfo info, VulkanRoot &root,
 
   auto extraced_data_buffers = std::move(maybe_data_buffers.value());
 
-  /*
-   *
-   * UNIFORM DATA BUFFERS
-   *
-   */
-  std::vector<vk::raii::Buffer> uniform_buffers;
-  std::vector<vk::raii::DeviceMemory> uniform_buffers_memory;
-  std::vector<void *> uniform_buffers_mapped;
-
-  for (auto i = 0; i < info.max_frames_in_flight; i++) {
-    auto buffer_size = vk::DeviceSize{sizeof(App3DUniformBuffer)};
-    auto maybe_buf_and_mem = DeviceUtil::create_buffer(
-        root.device_and_queue.logical(), root.device_and_queue.physical(),
-        buffer_size, vk::BufferUsageFlagBits::eUniformBuffer,
-        vk::MemoryPropertyFlagBits::eHostVisible |
-            vk::MemoryPropertyFlagBits::eHostCoherent);
-
-    if (!maybe_buf_and_mem)
-      return std::unexpected("3D App Uniform Buffer Init Error: " +
-                             maybe_buf_and_mem.error());
-    auto [buffer, buffer_mem] = std::move(maybe_buf_and_mem.value());
-
-    uniform_buffers.emplace_back(std::move(buffer));
-    uniform_buffers_memory.emplace_back(std::move(buffer_mem));
-    uniform_buffers_mapped.emplace_back(
-        uniform_buffers_memory.back().mapMemory(0, buffer_size));
-  }
-
-  auto uniform_buffer_data = UniformDataBuffers{
-      .uniform_buffers = std::move(uniform_buffers),
-      .uniform_buffers_memory = std::move(uniform_buffers_memory),
-      .uniform_buffers_mapped = std::move(uniform_buffers_mapped)};
-
-  /*
-   *
-   * Descriptor Sets
-   *
-   * TODO: understand any of it
-   *
-   */
-
-  auto descriptor_pool_size = vk::DescriptorPoolSize{
-      .type = vk::DescriptorType::eUniformBuffer,
-      .descriptorCount = static_cast<uint32_t>(info.max_frames_in_flight)};
-  auto descriptor_pool_info = vk::DescriptorPoolCreateInfo{
-      .flags = vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet,
-      .maxSets = static_cast<uint32_t>(info.max_frames_in_flight),
-      .poolSizeCount = 1,
-      .pPoolSizes = &descriptor_pool_size};
-
-  auto descriptor_pool = vk::raii::DescriptorPool(
-      root.device_and_queue.logical(), descriptor_pool_info);
-
-  auto layouts = std::vector<vk::DescriptorSetLayout>(info.max_frames_in_flight,
-                                                      *descriptor_set_layout);
-
-  auto allocation_info = vk::DescriptorSetAllocateInfo{
-      .descriptorPool = descriptor_pool,
-      .descriptorSetCount = static_cast<uint32_t>(layouts.size()),
-      .pSetLayouts = layouts.data()};
-
-  auto descriptor_sets =
-      root.device_and_queue.logical().allocateDescriptorSets(allocation_info);
-
-  for (auto i = 0; i < info.max_frames_in_flight; i++) {
-    auto buffer_info = vk::DescriptorBufferInfo{
-        .buffer = uniform_buffer_data.uniform_buffers[i],
-        .offset = 0,
-        .range = sizeof(App3DUniformBuffer)};
-    auto descriptor_write = vk::WriteDescriptorSet{
-        .dstSet = descriptor_sets[i],
-        .dstBinding = 0,
-        .dstArrayElement = 0,
-        .descriptorCount = 1,
-        .descriptorType = vk::DescriptorType::eUniformBuffer,
-        .pBufferInfo = &buffer_info};
-
-    root.device_and_queue.logical().updateDescriptorSets(descriptor_write, {});
-  }
-  //
-
   auto maybe_sync_objects = SyncObjects::SyncObjectsContainer::create(
       info.max_frames_in_flight, root.swapchain_info.images().size(),
       info.max_frames_in_flight, root.device_and_queue.logical());
@@ -161,12 +84,13 @@ auto App3D::create(App3DCreateInfo info, VulkanRoot &root,
 
   auto extracted_sync_objects = std::move(maybe_sync_objects.value());
 
-  auto object = App3D(
-      std::move(descriptor_set_layout), std::move(descriptor_pool),
-      std::move(descriptor_sets), std::move(extracted_pipeline_container),
-      std::move(extracted_command_buffers), std::move(extraced_data_buffers),
-      std::move(uniform_buffer_data), std::move(extracted_sync_objects),
-      info.max_frames_in_flight, info.default_colour);
+  auto object =
+      App3D(std::move(extracted_uniform_buffer_container),
+            std::move(extracted_pipeline_container),
+            std::move(extracted_command_buffers),
+            std::move(extraced_data_buffers), std::move(extracted_sync_objects),
+            info.max_frames_in_flight, info.default_colour);
+
   return std::move(object);
 }
 
@@ -195,7 +119,8 @@ auto App3D::update_uniform_buffer(uint32_t current_image,
                               0.1f, 10.0f);
   ubo.proj[1][1] *= -1;
 
-  memcpy(uniform_data.uniform_buffers_mapped[current_image], &ubo, sizeof(ubo));
+  memcpy(uniform_buffer_container.uniform_buffer_mapped(current_image), &ubo,
+         sizeof(ubo));
 }
 
 auto App3D::get_current_state(
@@ -203,6 +128,7 @@ auto App3D::get_current_state(
     SwapchainInfo::SwapchainInfoContainer &swapchain_state)
     -> std::expected<std::optional<VulkanAppTickState>, std::string> {
   //=// Update Uniform Buffers
+  pipeline_data.update_dynamic_objects(swapchain_state.dimensions());
 
   update_uniform_buffer(current_frame_index, swapchain_state.dimensions());
 
@@ -229,15 +155,10 @@ auto App3D::get_current_state(
   if (result != vk::Result::eSuccess && result != vk::Result::eSuboptimalKHR)
     return std::unexpected("Failed to acquire next swap chain image");
 
-  record_command_buffer(
-      swapchain_state.images()[image_index],
-      swapchain_state.image_views()[image_index],
-      vk::Rect2D(vk::Offset2D(0, 0), swapchain_state.dimensions()),
-      // TODO: viewport and scissor and render_area need to be stored
-      vk::Viewport(
-          0.0f, 0.0f, static_cast<float>(swapchain_state.dimensions().width),
-          static_cast<float>(swapchain_state.dimensions().height), 0.0f, 1.0f),
-      vk::Rect2D(vk::Offset2D(0, 0), swapchain_state.dimensions()));
+  record_command_buffer(swapchain_state.images()[image_index],
+                        swapchain_state.image_views()[image_index],
+                        pipeline_data.scissor(), pipeline_data.viewport(),
+                        pipeline_data.scissor());
 
   auto wait_destination_stage_mask =
       vk::PipelineStageFlags{vk::PipelineStageFlagBits::eColorAttachmentOutput};
@@ -315,10 +236,11 @@ auto App3D::record_command_buffer(vk::Image &transition_image,
 
   command_buffer.bindDescriptorSets(
       vk::PipelineBindPoint::eGraphics, pipeline_data.layout(), 0,
-      *descriptor_sets[current_frame_index], nullptr);
+      *uniform_buffer_container.descriptor_set(current_frame_index), nullptr);
 
   command_buffer.drawIndexed(static_cast<uint32_t>(data_buffers.indices().size),
                              1, 0, 0, 0);
+
   BufferUtils::transition_image_layout_on_buffer(
       command_buffer, transition_image,
       vk::ImageLayout::eColorAttachmentOptimal, vk::ImageLayout::ePresentSrcKHR,
@@ -338,6 +260,7 @@ auto create_3d_app(VulkanRoot &vulkan_root)
           vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA};
 
   auto app_create_info = App3DCreateInfo{
+      .buffer_stage = vk::ShaderStageFlagBits::eAllGraphics,
       .pipeline_details =
           GraphicsPipeline::PipelineContainerCreateInfo{
               .vertex_shader_path = "shaders/3d_shader.spv",

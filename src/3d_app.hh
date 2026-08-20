@@ -1,5 +1,6 @@
 #include "buffers/command_buffer_container.hh"
 #include "buffers/data_buffer_container.hh"
+#include "buffers/uniform_buffer_container.hh"
 #include "pipeline/graphics_pipeline_container.hh"
 #include "syncs/sync_object_container.hh"
 #include "wrapper_boilerplate.hh"
@@ -41,6 +42,7 @@ struct ShaderVertex3D {
 };
 
 struct App3DCreateInfo {
+  vk::ShaderStageFlagBits buffer_stage;
   GraphicsPipeline::PipelineContainerCreateInfo pipeline_details;
   vk::ClearColorValue default_colour;
 
@@ -52,12 +54,6 @@ struct App3DUniformBuffer {
   glm::mat4 model;
   glm::mat4 view;
   glm::mat4 proj;
-};
-
-struct UniformDataBuffers {
-  std::vector<vk::raii::Buffer> uniform_buffers;
-  std::vector<vk::raii::DeviceMemory> uniform_buffers_memory;
-  std::vector<void *> uniform_buffers_mapped;
 };
 
 struct App3D : public VulkanAppInterface {
@@ -81,32 +77,25 @@ struct App3D : public VulkanAppInterface {
       -> void;
 
 private:
-  App3D(vk::raii::DescriptorSetLayout &&d_s_l, vk::raii::DescriptorPool &&d_p,
-        std::vector<vk::raii::DescriptorSet> &&v_d_s,
+  App3D(BufferUtils::UniformBufferContainer<App3DUniformBuffer>
+            &&uniform_buffer_container,
         GraphicsPipeline::PipelineContainer &&p_d,
         BufferUtils::CommandPoolAndBuffersContainer &&c_p_a_b,
         BufferUtils::DataBufferContainer<ShaderVertex3D, uint16_t> &&d_b,
-        UniformDataBuffers &&u_d_b, SyncObjects::SyncObjectsContainer &&s_o,
-        uint32_t m_f_i_f, vk::ClearColorValue d_c)
-      : descriptor_set_layout(std::move(d_s_l)),
-        descriptor_pool(std::move(d_p)), descriptor_sets(std::move(v_d_s)),
+        SyncObjects::SyncObjectsContainer &&s_o, uint32_t m_f_i_f,
+        vk::ClearColorValue d_c)
+      : uniform_buffer_container(std::move(uniform_buffer_container)),
         pipeline_data(std::move(p_d)),
         command_pool_and_buffers(std::move(c_p_a_b)),
-        data_buffers(std::move(d_b)), uniform_data(std::move(u_d_b)),
-        sync_objects(std::move(s_o)), max_frames_in_flight(m_f_i_f),
-        default_colour(d_c) {};
+        data_buffers(std::move(d_b)), sync_objects(std::move(s_o)),
+        max_frames_in_flight(m_f_i_f), default_colour(d_c) {};
 
 public:
-  // Uniform Buffer Stuff
-  vk::raii::DescriptorSetLayout descriptor_set_layout;
-  vk::raii::DescriptorPool descriptor_pool;
-  std::vector<vk::raii::DescriptorSet> descriptor_sets;
-
+  BufferUtils::UniformBufferContainer<App3DUniformBuffer>
+      uniform_buffer_container;
   GraphicsPipeline::PipelineContainer pipeline_data;
   BufferUtils::CommandPoolAndBuffersContainer command_pool_and_buffers;
   BufferUtils::DataBufferContainer<ShaderVertex3D, uint16_t> data_buffers;
-
-  UniformDataBuffers uniform_data;
 
   SyncObjects::SyncObjectsContainer sync_objects;
 

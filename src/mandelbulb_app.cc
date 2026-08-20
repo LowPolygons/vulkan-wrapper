@@ -75,6 +75,8 @@ auto MandelbulbApp::get_current_state(
     SwapchainInfo::SwapchainInfoContainer &swapchain_state)
     -> std::expected<std::optional<VulkanAppTickState>, std::string> {
   //=// This shader expects a Push constant of type MandelbulbFragPushConstants
+  pipeline_data.update_dynamic_objects(swapchain_state.dimensions());
+
   morph_mandelbulb();
 
   auto push_constants = MandelbulbFragPushConstants{
@@ -107,15 +109,10 @@ auto MandelbulbApp::get_current_state(
   if (result != vk::Result::eSuccess && result != vk::Result::eSuboptimalKHR)
     return std::unexpected("Failed to acquire next swap chain image");
 
-  record_command_buffer(
-      push_constants, swapchain_state.images()[image_index],
-      swapchain_state.image_views()[image_index],
-      vk::Rect2D(vk::Offset2D(0, 0), swapchain_state.dimensions()),
-      // TODO: viewport and scissor and render_area need to be stored
-      vk::Viewport(
-          0.0f, 0.0f, static_cast<float>(swapchain_state.dimensions().width),
-          static_cast<float>(swapchain_state.dimensions().height), 0.0f, 1.0f),
-      vk::Rect2D(vk::Offset2D(0, 0), swapchain_state.dimensions()));
+  record_command_buffer(push_constants, swapchain_state.images()[image_index],
+                        swapchain_state.image_views()[image_index],
+                        pipeline_data.scissor(), pipeline_data.viewport(),
+                        pipeline_data.scissor());
 
   auto wait_destination_stage_mask =
       vk::PipelineStageFlags{vk::PipelineStageFlagBits::eColorAttachmentOutput};
@@ -220,31 +217,36 @@ auto create_mandelbulb_app(VulkanRoot &vulkan_root)
 
   auto app_create_info = MandelbulbAppCreateInfo{
       .pipeline_details =
-          GraphicsPipeline::PipelineContainerCreateInfo{
-              .vertex_shader_path = "shaders/frag_shader.spv",
-              .frag_shader_path = "shaders/frag_shader.spv",
-              .vertex_main_func_name = "vertMain",
-              .frag_main_func_name = "fragMain",
-              .binding_description = ShaderVertex::get_binding_descriptions(),
-              .attribute_descriptions =
-                  ShaderVertex::get_attribute_descriptions(),
-              .screen_region = {0, 0, 800, 600, 0, 1},
-              .image_slice = {vk::Offset2D(0, 0), {800, 600}},
-              .polygon_mode = vk::PolygonMode::eFill,
-              .cull_mode = vk::CullModeFlagBits::eBack,
-              .front_face = vk::FrontFace::eClockwise,
-              .colour_blend_data =
-                  vk::PipelineColorBlendStateCreateInfo{
-                      .logicOpEnable = vk::False,
-                      .logicOp = vk::LogicOp::eClear,
-                      .attachmentCount = 1,
-                      .pAttachments = &app_colour_blend_data},
-              .maybe_push_constant_ranges = std::vector{vk::PushConstantRange{
-                  .stageFlags = vk::ShaderStageFlagBits::eFragment,
-                  .offset = 0,
-                  .size = sizeof(MandelbulbFragPushConstants)}},
-          },
-      .default_colour = vk::ClearColorValue(0.0, 0.0, 0.0, 1.0f),
+          // TODO: A nice Refactor of the PipelineContainerCreateInfo:
+          // -> ShaderVertex is now passed in through declval and the code gets
+          // the binding/attribute descriptions
+          // -> screen_region and image slice is a wrapper class
+          // -> look into push constant ranges vs uniform buffers
+      GraphicsPipeline::PipelineContainerCreateInfo{
+          .vertex_shader_path = "shaders/frag_shader.spv",
+          .frag_shader_path = "shaders/frag_shader.spv",
+          .vertex_main_func_name = "vertMain",
+          .frag_main_func_name = "fragMain",
+          .binding_description = ShaderVertex::get_binding_descriptions(),
+          .attribute_descriptions = ShaderVertex::get_attribute_descriptions(),
+          .screen_region = {0, 0, 800, 600, 0, 1},
+          // WARN: This causes device lost errors
+          .image_slice = {vk::Offset2D(0, 0), {800, 600}},
+          .polygon_mode = vk::PolygonMode::eFill,
+          .cull_mode = vk::CullModeFlagBits::eBack,
+          .front_face = vk::FrontFace::eClockwise,
+          .colour_blend_data =
+              vk::PipelineColorBlendStateCreateInfo{
+                  .logicOpEnable = vk::False,
+                  .logicOp = vk::LogicOp::eClear,
+                  .attachmentCount = 1,
+                  .pAttachments = &app_colour_blend_data},
+          .push_constant_ranges = std::vector{vk::PushConstantRange{
+              .stageFlags = vk::ShaderStageFlagBits::eFragment,
+              .offset = 0,
+              .size = sizeof(MandelbulbFragPushConstants)}},
+      },
+      .default_colour = vk::ClearColorValue(1.0, 0.543, 0.234, 0.2f),
       .max_frames_in_flight = 2};
 
   auto maybe_app = MandelbulbApp::create(app_create_info, vulkan_root,

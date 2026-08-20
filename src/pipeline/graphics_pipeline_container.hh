@@ -30,7 +30,7 @@ struct PipelineContainerCreateInfo {
 
   vk::PipelineColorBlendStateCreateInfo colour_blend_data;
 
-  std::optional<std::vector<vk::PushConstantRange>> maybe_push_constant_ranges;
+  std::vector<vk::PushConstantRange> push_constant_ranges;
 };
 
 class PipelineContainer {
@@ -39,6 +39,10 @@ public:
 
   auto layout() -> vk::raii::PipelineLayout &;
   auto pipeline() -> vk::raii::Pipeline &;
+  auto viewport() -> vk::Viewport;
+  auto scissor() -> vk::Rect2D;
+
+  auto update_dynamic_objects(vk::Extent2D &swapchain_size) -> void;
 
   static auto create(PipelineContainerCreateInfo info, vk::raii::Device &device,
                      vk::SurfaceFormatKHR &surface_format,
