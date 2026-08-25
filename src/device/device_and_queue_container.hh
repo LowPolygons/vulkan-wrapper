@@ -8,8 +8,11 @@ namespace DeviceUtil {
 
 enum class DeviceType { DISCRETE, INTEGRATED };
 
+enum class QueueTypes { GRAPHICS, COMPUTE, GRAPHICS_AND_COMPUTE };
+
 struct DeviceCreateInfo {
   DeviceType queue_flags;
+  QueueTypes queue_types;
   std::vector<const char *> required_device_extensions;
 };
 
@@ -51,7 +54,7 @@ namespace FactorHelper {
 [[nodiscard]] auto create_logical_device_and_update_queue_index(
     DeviceUtil::DeviceCreateInfo info, const vk::raii::Instance &instance,
     vk::raii::PhysicalDevice &physical_device, uint32_t &mut_queue_index_ref,
-    const vk::raii::SurfaceKHR &surface)
+    const vk::raii::SurfaceKHR &surface, QueueTypes queue_types)
     -> std::expected<vk::raii::Device, std::string>;
 } // namespace FactorHelper
 

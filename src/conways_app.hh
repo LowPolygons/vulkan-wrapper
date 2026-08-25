@@ -1,0 +1,129 @@
+#ifndef VULKAN_WRAPPER_COMPUTE_AND_FRAG_TEST_APP_HH
+#define VULKAN_WRAPPER_COMPUTE_AND_FRAG_TEST_APP_HH
+
+#include "buffers/arbitrary_gpu_data_buffer.hh"
+#include "buffers/command_buffer_container.hh"
+#include "buffers/data_buffer_container.hh"
+#include "pipeline/compute_pipeline_container.hh"
+#include "pipeline/graphics_pipeline_container.hh"
+#include "syncs/compute_sync_object_container.hh"
+#include "syncs/sync_object_container.hh"
+#include "wrapper_boilerplate.hh"
+#include <glm/fwd.hpp>
+#include <glm/glm.hpp>
+
+struct Vertex {
+  glm::vec2 position;
+  glm::vec3 colour;
+  static vk::VertexInputBindingDescription get_binding_descriptions() {
+    return {.binding = 0,
+            .stride = sizeof(Vertex),
+            .inputRate = vk::VertexInputRate::eVertex};
+  }
+  static std::vector<vk::VertexInputAttributeDescription>
+  get_attribute_descriptions() {
+    return {{
+        vk::VertexInputAttributeDescription{.location = 0,
+                                            .binding = 0,
+                                            .format = vk::Format::eR32G32Sfloat,
+                                            .offset =
+                                                offsetof(Vertex, position)},
+        vk::VertexInputAttributeDescription{.location = 1,
+                                            .binding = 0,
+                                            .format =
+                                                vk::Format::eR32G32B32Sfloat,
+                                            .offset = offsetof(Vertex, colour)},
+    }};
+  }
+};
+
+// Push Constants for frag shader
+struct ConwaysState {
+  glm::uint32_t sim_width;
+  glm::uint32_t sim_height;
+  vk::DeviceAddress state_address_a;
+  vk::DeviceAddress state_address_b;
+  glm::uint32_t alternator;
+  glm::f32 win_x;
+  glm::f32 win_y;
+  glm::f32 time;
+};
+
+struct ConwaysCreateInfo {
+  vk::ShaderStageFlagBits buffer_stage;
+  GraphicsPipeline::PipelineContainerCreateInfo pipeline_details;
+  vk::ClearColorValue default_colour;
+  std::size_t max_frames_in_flight;
+  ComputePipeline::ComputePipelineCreateInfo compute_details;
+
+  uint16_t sim_width;
+  uint16_t sim_height;
+  std::vector<uint8_t> initial_state;
+};
+
+struct ConwaysGameOfLife : public VulkanAppInterface {
+  static_assert(sizeof(ConwaysState) <= 128);
+
+public:
+  static auto create(ConwaysCreateInfo info, VulkanRoot &root,
+                     std::vector<Vertex> vertices,
+                     std::vector<uint16_t> indices)
+      -> std::expected<ConwaysGameOfLife, std::string>;
+
+  bool is_running() override;
+  auto get_current_state(std::shared_ptr<GLFWwindow> window,
+                         vk::raii::Device &logical_device,
+                         SwapchainInfo::SwapchainInfoContainer &swapchain_state)
+      -> std::expected<std::optional<VulkanAppTickState>, std::string> override;
+
+  auto record_command_buffer(ConwaysState push_constants,
+                             vk::Image &transition_image,
+                             vk::raii::ImageView &image_view,
+                             vk::Rect2D render_area, vk::Viewport viewport,
+                             vk::Rect2D scissor) -> void;
+
+  ConwaysGameOfLife(
+      GraphicsPipeline::PipelineContainer &&g_p_a,
+      ComputePipeline::ComputePipelineContainer &&c_p_d,
+      BufferUtils::CommandPoolAndBuffersContainer &&c_p_a_b,
+      BufferUtils::DataBufferContainer<Vertex, uint16_t> &&d_b,
+      SyncObjects::SyncObjectsContainer &&s_o,
+      SyncObjects::ComputeSyncObjects &&c_s_o, uint32_t m_f_i_f,
+      vk::ClearColorValue d_c, std::pair<uint16_t, uint16_t> sim_state,
+      BufferUtils::ArbitraryGpuDataContainer<glm::uint8> &&c_s_b_a,
+      BufferUtils::ArbitraryGpuDataContainer<glm::uint8> &&c_s_b_b)
+      : graphics_pipeline_data(std::move(g_p_a)),
+        compute_pipeline_data(std::move(c_p_d)),
+        command_pool_and_buffers(std::move(c_p_a_b)),
+        data_buffers(std::move(d_b)), sync_objects(std::move(s_o)),
+        compute_sync_objects(std::move(c_s_o)), max_frames_in_flight(m_f_i_f),
+        current_frame_index(0), default_colour(d_c), sim_width(sim_state.first),
+        sim_height(sim_state.second),
+        compute_shader_buffer_a(std::move(c_s_b_a)),
+        compute_shader_buffer_b(std::move(c_s_b_b)),
+        a_is_current_not_prev(true) {}
+
+private:
+  GraphicsPipeline::PipelineContainer graphics_pipeline_data;
+  ComputePipeline::ComputePipelineContainer compute_pipeline_data;
+  BufferUtils::CommandPoolAndBuffersContainer command_pool_and_buffers;
+  BufferUtils::DataBufferContainer<Vertex, uint16_t> data_buffers;
+  SyncObjects::SyncObjectsContainer sync_objects;
+  SyncObjects::ComputeSyncObjects compute_sync_objects;
+
+  uint32_t max_frames_in_flight;
+  uint32_t current_frame_index = 0;
+
+  vk::ClearColorValue default_colour;
+
+  // Compute Shader Things
+  uint16_t sim_width;
+  uint16_t sim_height;
+  BufferUtils::ArbitraryGpuDataContainer<glm::uint8_t> compute_shader_buffer_a;
+  BufferUtils::ArbitraryGpuDataContainer<glm::uint8_t> compute_shader_buffer_b;
+  bool a_is_current_not_prev;
+};
+
+auto create_conways_app(VulkanRoot &root)
+    -> std::expected<ConwaysGameOfLife, std::string>;
+#endif

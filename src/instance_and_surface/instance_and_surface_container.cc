@@ -42,8 +42,8 @@ auto InstanceAndSurface::VulkanInstanceAndSurface::create(
       required_window_extensions,
       required_window_extensions + glfw_extension_count};
 
-  // for (auto &additional_ext : info.additional_extensions)
-  //   all_required_extensions.push_back(additional_ext);
+  for (auto &additional_ext : info.additional_extensions)
+    all_required_extensions.push_back(additional_ext);
 
   auto maybe_extensions_validated =
       std::expected<void, std::string>{FactoryHelper::validate_extensions(

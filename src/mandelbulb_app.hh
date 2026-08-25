@@ -6,7 +6,6 @@
 #include "pipeline/graphics_pipeline_container.hh"
 #include "syncs/sync_object_container.hh"
 #include "wrapper_boilerplate.hh"
-#include <glm/ext/vector_float3.hpp>
 #include <glm/glm.hpp>
 
 struct ShaderVertex {

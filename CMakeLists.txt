@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(SHADER_SLANG_SOURCES
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/shaders/frag_shader.slang
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/shaders/conways_game_of_life.slang
 )
 message(STATUS "Shader sources: ${SHADER_SLANG_SOURCES}")
 
@@ -20,20 +20,20 @@ function (add_slang_shader_target TARGET)
     # thank god this was written for me by khronos because what is going on here
     cmake_parse_arguments ("SHADER" "" "" "SOURCES" ${ARGN})
     set (SHADERS_DIR ${CMAKE_CURRENT_LIST_DIR}/shaders)
-    set (ENTRY_POINTS -entry vertMain -entry fragMain)
+    set (ENTRY_POINTS -entry vertMain -entry fragMain -entry compMain)
     add_custom_command (
         OUTPUT ${SHADERS_DIR}
         COMMAND ${CMAKE_COMMAND} -E make_directory ${SHADERS_DIR}
     )
   add_custom_command (
-          OUTPUT  ${SHADERS_DIR}/frag_shader.spv
-          COMMAND ${SLANGC_EXECUTABLE} ${SHADER_SOURCES} -target spirv -profile spirv_1_4 -emit-spirv-directly -fvk-use-entrypoint-name ${ENTRY_POINTS} -o frag_shader.spv
+          OUTPUT  ${SHADERS_DIR}/conways.spv
+          COMMAND ${SLANGC_EXECUTABLE} ${SHADER_SOURCES} -target spirv -profile spirv_1_4 -emit-spirv-directly -fvk-use-entrypoint-name ${ENTRY_POINTS} -o conways.spv
           WORKING_DIRECTORY ${SHADERS_DIR}
           DEPENDS ${SHADERS_DIR} ${SHADER_SOURCES}
           COMMENT "Compiling Slang Shaders"
           VERBATIM
   )
-  add_custom_target (${TARGET} DEPENDS ${SHADERS_DIR}/frag_shader.spv)
+  add_custom_target (${TARGET} DEPENDS ${SHADERS_DIR}/conways.spv)
 endfunction()
 
 add_executable(vulkan_app
@@ -53,6 +53,10 @@ add_executable(vulkan_app
     src/wrapper_boilerplate.cc
     src/mandelbulb_app.cc
     src/3d_app.cc
+    src/conways_app.cc
+    src/syncs/compute_sync_object_container.cc
+    src/pipeline/compute_pipeline_container.cc
+    src/debugger/debugger_container.cc
     src/main.cpp
 )
 

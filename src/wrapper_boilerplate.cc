@@ -1,4 +1,5 @@
 #include "wrapper_boilerplate.hh"
+#include "debugger/debugger_container.hh"
 #include "instance_and_surface/instance_and_surface_container.hh"
 #include "swapchain/swapchain_info_container.hh"
 #include "vulkan/vulkan.hpp"
@@ -91,8 +92,23 @@ auto VulkanRoot::create(VulkanRootCreateinfo info)
   if (!maybe_instance_and_surface)
     return std::unexpected("InstanceAndSurface Init Error: " +
                            maybe_instance_and_surface.error());
+
   auto extracted_instance_and_surface =
       std::move(maybe_instance_and_surface.value());
+
+  std::cout << "Here!" << std::endl;
+  // TODO make it optional
+  auto maybe_debugger =
+      Debugging::Debugger::create(extracted_instance_and_surface.instance());
+
+  if (!maybe_debugger)
+    return std::unexpected("Failed to create debugger");
+
+  std::cout << "Here" << std::endl;
+
+  auto extracted_debugger = std::move(maybe_debugger.value());
+
+  std::cout << "Here!!!" << std::endl;
 
   auto maybe_device_and_queue_container =
       DeviceUtil::DeviceAndQueueContainer::create(
@@ -133,6 +149,7 @@ auto VulkanRoot::create(VulkanRootCreateinfo info)
 
   auto object = VulkanRoot(info.present_mode, std::move(glfw_window_container),
                            std::move(extracted_instance_and_surface),
+                           std::move(extracted_debugger),
                            std::move(extracted_device_and_queue_container),
                            std::move(extracted_swap_chain_info));
 

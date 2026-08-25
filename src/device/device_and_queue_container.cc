@@ -35,7 +35,8 @@ auto DeviceUtil::DeviceAndQueueContainer::create(
 
   auto maybe_logical_device =
       DeviceUtil::FactorHelper::create_logical_device_and_update_queue_index(
-          info, instance, physical_device, queue_index, surface);
+          info, instance, physical_device, queue_index, surface,
+          info.queue_types);
 
   if (!maybe_logical_device)
     return std::unexpected(maybe_logical_device.error());
@@ -132,7 +133,7 @@ auto DeviceUtil::FactorHelper::create_physical_device(
 auto DeviceUtil::FactorHelper::create_logical_device_and_update_queue_index(
     DeviceUtil::DeviceCreateInfo info, const vk::raii::Instance &instance,
     vk::raii::PhysicalDevice &physical_device, uint32_t &mut_queue_index_ref,
-    const vk::raii::SurfaceKHR &surface)
+    const vk::raii::SurfaceKHR &surface, DeviceUtil::QueueTypes queue_types)
     -> std::expected<vk::raii::Device, std::string> {
   if (instance == nullptr || physical_device == nullptr)
     std::unexpected("Instance or physical device were not created before "
@@ -145,12 +146,22 @@ auto DeviceUtil::FactorHelper::create_logical_device_and_update_queue_index(
   mut_queue_index_ref = ~0;
 
   for (uint32_t index = 0; index < queue_fam_properties.size(); index++) {
-    if ((queue_fam_properties[index].queueFlags &
-         vk::QueueFlagBits::eGraphics) &&
-        physical_device.getSurfaceSupportKHR(index, *surface)) {
-      mut_queue_index_ref = index;
-      break;
-    }
+    if (!physical_device.getSurfaceSupportKHR(index, *surface))
+      continue;
+
+    if ((queue_types == QueueTypes::GRAPHICS or
+         queue_types == QueueTypes::GRAPHICS_AND_COMPUTE) and
+        !(queue_fam_properties[index].queueFlags &
+          vk::QueueFlagBits::eGraphics))
+      continue;
+
+    if ((queue_types == QueueTypes::COMPUTE or
+         queue_types == QueueTypes::GRAPHICS_AND_COMPUTE) and
+        !(queue_fam_properties[index].queueFlags & vk::QueueFlagBits::eCompute))
+      continue;
+
+    mut_queue_index_ref = index;
+    break;
   }
 
   auto device_feature_chain =

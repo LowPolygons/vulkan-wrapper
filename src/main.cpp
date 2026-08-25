@@ -1,5 +1,6 @@
 
 #include "3d_app.hh"
+#include "conways_app.hh"
 #include "mandelbulb_app.hh"
 #include "vulkan/vulkan.hpp"
 #include "wrapper_boilerplate.hh"
@@ -17,13 +18,14 @@ auto main() -> int {
       .width = 800,
       .height = 600,
       .window_resizable = true,
-      .window_name = "Morphing Mandelbulb",
+      .window_name = "Vulkan App",
       .application_info =
           vk::ApplicationInfo{.applicationVersion = VK_MAKE_VERSION(1, 0, 0),
                               .apiVersion = vk::ApiVersion13},
       .layers = {"VK_LAYER_KHRONOS_validation"},
-      .instance_extensions = {},
+      .instance_extensions = {vk::EXTDebugUtilsExtensionName},
       .gpu_type = DeviceUtil::DeviceType::DISCRETE,
+      .queue_reqs = DeviceUtil::QueueTypes::GRAPHICS_AND_COMPUTE,
       .device_extensions = {vk::KHRSwapchainExtensionName},
       .present_mode = vk::PresentModeKHR::eFifo};
 
@@ -36,7 +38,8 @@ auto main() -> int {
 
   auto vulkan_root = std::move(maybe_vulkan_root.value());
 
-  auto maybe_app = create_mandelbulb_app(vulkan_root);
+  auto maybe_app = create_conways_app(vulkan_root);
+  // auto maybe_app = create_mandelbulb_app(vulkan_root);
   // auto maybe_app = create_3d_app(vulkan_root);
 
   if (!maybe_app) {
