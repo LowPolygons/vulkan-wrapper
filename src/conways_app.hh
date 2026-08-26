@@ -6,7 +6,6 @@
 #include "buffers/data_buffer_container.hh"
 #include "pipeline/compute_pipeline_container.hh"
 #include "pipeline/graphics_pipeline_container.hh"
-#include "syncs/compute_sync_object_container.hh"
 #include "syncs/sync_object_container.hh"
 #include "wrapper_boilerplate.hh"
 #include <glm/fwd.hpp>
@@ -47,6 +46,11 @@ struct ConwaysState {
   glm::f32 win_x;
   glm::f32 win_y;
   glm::f32 time;
+  glm::f32 ___padding___;
+  glm::uint32_t mouse_x;
+  glm::uint32_t mouse_y;
+  glm::uint32_t mouse_down;
+  glm::uint32_t paused;
 };
 
 struct ConwaysCreateInfo {
@@ -87,8 +91,7 @@ public:
       ComputePipeline::ComputePipelineContainer &&c_p_d,
       BufferUtils::CommandPoolAndBuffersContainer &&c_p_a_b,
       BufferUtils::DataBufferContainer<Vertex, uint16_t> &&d_b,
-      SyncObjects::SyncObjectsContainer &&s_o,
-      SyncObjects::ComputeSyncObjects &&c_s_o, uint32_t m_f_i_f,
+      SyncObjects::SyncObjectsContainer &&s_o, uint32_t m_f_i_f,
       vk::ClearColorValue d_c, std::pair<uint16_t, uint16_t> sim_state,
       BufferUtils::ArbitraryGpuDataContainer<glm::uint8> &&c_s_b_a,
       BufferUtils::ArbitraryGpuDataContainer<glm::uint8> &&c_s_b_b)
@@ -96,8 +99,8 @@ public:
         compute_pipeline_data(std::move(c_p_d)),
         command_pool_and_buffers(std::move(c_p_a_b)),
         data_buffers(std::move(d_b)), sync_objects(std::move(s_o)),
-        compute_sync_objects(std::move(c_s_o)), max_frames_in_flight(m_f_i_f),
-        current_frame_index(0), default_colour(d_c), sim_width(sim_state.first),
+        max_frames_in_flight(m_f_i_f), current_frame_index(0),
+        default_colour(d_c), sim_width(sim_state.first),
         sim_height(sim_state.second),
         compute_shader_buffer_a(std::move(c_s_b_a)),
         compute_shader_buffer_b(std::move(c_s_b_b)),
@@ -109,7 +112,6 @@ private:
   BufferUtils::CommandPoolAndBuffersContainer command_pool_and_buffers;
   BufferUtils::DataBufferContainer<Vertex, uint16_t> data_buffers;
   SyncObjects::SyncObjectsContainer sync_objects;
-  SyncObjects::ComputeSyncObjects compute_sync_objects;
 
   uint32_t max_frames_in_flight;
   uint32_t current_frame_index = 0;

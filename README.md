@@ -1,8 +1,7 @@
-# Vulkan Implementation
+# Vulkan Wrapper 
 
-## TODO
-DeviceAndQueueContainer needs a flag to specify if the root needs graphics, compute or both
-
+## Conways Game of Life App
+![Conways](conways_hello_world.png)
 
 ## VulkanRoot
 ```cpp

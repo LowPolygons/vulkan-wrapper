@@ -2,7 +2,7 @@
 #include "buffers/arbitrary_gpu_data_buffer.hh"
 #include "buffers/transition_buffer_layout.hh"
 #include "pipeline/compute_pipeline_container.hh"
-#include "syncs/compute_sync_object_container.hh"
+#include <GLFW/glfw3.h>
 #include <random>
 
 auto ConwaysGameOfLife::is_running() -> bool { return true; }
@@ -75,17 +75,6 @@ auto ConwaysGameOfLife::create(ConwaysCreateInfo info, VulkanRoot &root,
 
   auto extracted_sync_objects = std::move(maybe_sync_objects.value());
 
-  auto maybe_compute_sync_objects = SyncObjects::ComputeSyncObjects::create(
-      info.max_frames_in_flight, root.device_and_queue.logical());
-
-  if (!maybe_compute_sync_objects)
-    return std::unexpected(
-        "Conways Game Of Life Compute Sync Objects Init Error : " +
-        maybe_compute_sync_objects.error());
-
-  auto extracted_compute_sync_objects =
-      std::move(maybe_compute_sync_objects.value());
-
   // Ensure that the size of the vector is the sim width and height
   if (info.sim_height * info.sim_width != info.initial_state.size())
     return std::unexpected("Conways Game Of Life game state Error: initial "
@@ -127,8 +116,7 @@ auto ConwaysGameOfLife::create(ConwaysCreateInfo info, VulkanRoot &root,
       std::move(extracted_pipeline_container),
       std::move(extracted_compute_pipeline),
       std::move(extracted_command_buffers), std::move(extraced_data_buffers),
-      std::move(extracted_sync_objects),
-      std::move(extracted_compute_sync_objects), info.max_frames_in_flight,
+      std::move(extracted_sync_objects), info.max_frames_in_flight,
       info.default_colour, {info.sim_width, info.sim_height},
       std::move(extraced_arbitrary_buffer_a),
       std::move(extraced_arbitrary_buffer_b));
@@ -154,7 +142,21 @@ auto ConwaysGameOfLife::get_current_state(
       .win_x = static_cast<glm::f32>(swapchain_state.dimensions().width),
       .win_y = static_cast<glm::f32>(swapchain_state.dimensions().height),
       .time = 1,
+      .mouse_down = 0,
+      .paused = 1,
   };
+
+  if (glfwGetMouseButton(window.get(), GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
+    double window_x, window_y;
+    glfwGetCursorPos(window.get(), &window_x, &window_y);
+
+    push_constants.mouse_down = 1;
+    push_constants.mouse_x = static_cast<uint32_t>(window_x);
+    push_constants.mouse_y = static_cast<uint32_t>(window_y);
+  }
+  if (glfwGetKey(window.get(), GLFW_KEY_SPACE) == GLFW_PRESS) {
+    push_constants.paused = 0;
+  }
 
   a_is_current_not_prev = !a_is_current_not_prev;
 

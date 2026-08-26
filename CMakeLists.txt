@@ -54,7 +54,6 @@ add_executable(vulkan_app
     src/mandelbulb_app.cc
     src/3d_app.cc
     src/conways_app.cc
-    src/syncs/compute_sync_object_container.cc
     src/pipeline/compute_pipeline_container.cc
     src/debugger/debugger_container.cc
     src/main.cpp
