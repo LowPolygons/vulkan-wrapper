@@ -1,7 +1,7 @@
 #ifndef VULKAN_WRAPPER_BUFFERS_DATA_BUFFER_CONTAINER_HH
 #define VULKAN_WRAPPER_BUFFERS_DATA_BUFFER_CONTAINER_HH
 
-#include "buffer_copy.hh"
+#include "vulkan_wrapper/buffers/buffer_copy.hh"
 #include <cstddef>
 #include <expected>
 #include <string>

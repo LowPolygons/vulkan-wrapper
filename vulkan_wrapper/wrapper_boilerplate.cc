@@ -1,8 +1,8 @@
-#include "wrapper_boilerplate.hh"
-#include "debugger/debugger_container.hh"
-#include "instance_and_surface/instance_and_surface_container.hh"
-#include "swapchain/swapchain_info_container.hh"
+#include "vulkan_wrapper/wrapper_boilerplate.hh"
 #include "vulkan/vulkan.hpp"
+#include "vulkan_wrapper/debugger/debugger_container.hh"
+#include "vulkan_wrapper/instance_and_surface/instance_and_surface_container.hh"
+#include "vulkan_wrapper/swapchain/swapchain_info_container.hh"
 #include <GLFW/glfw3.h>
 #include <print>
 #include <vulkan/vulkan_raii.hpp>

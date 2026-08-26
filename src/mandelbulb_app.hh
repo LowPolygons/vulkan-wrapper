@@ -1,11 +1,11 @@
 #ifndef VULKAN_WRAPPER_IMPLEMENTATION_MANDELBULB_APP_HH
 #define VULKAN_WRAPPER_IMPLEMENTATION_MANDELBULB_APP_HH
 
-#include "buffers/command_buffer_container.hh"
-#include "buffers/data_buffer_container.hh"
-#include "pipeline/graphics_pipeline_container.hh"
-#include "syncs/sync_object_container.hh"
-#include "wrapper_boilerplate.hh"
+#include "vulkan_wrapper/buffers/command_buffer_container.hh"
+#include "vulkan_wrapper/buffers/data_buffer_container.hh"
+#include "vulkan_wrapper/pipeline/graphics_pipeline_container.hh"
+#include "vulkan_wrapper/syncs/sync_object_container.hh"
+#include "vulkan_wrapper/wrapper_boilerplate.hh"
 #include <glm/glm.hpp>
 
 struct ShaderVertex {

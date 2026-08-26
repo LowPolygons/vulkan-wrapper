@@ -1,23 +1,17 @@
 
-#include "3d_app.hh"
 #include "conways_app.hh"
-#include "mandelbulb_app.hh"
-#include "vulkan/vulkan.hpp"
-#include "wrapper_boilerplate.hh"
-
+#include "vulkan_wrapper/wrapper_boilerplate.hh"
 #include <GLFW/glfw3.h>
 #include <cstdlib>
 #include <iostream>
 #include <vulkan/vulkan.hpp>
 #include <vulkan/vulkan_raii.hpp>
 
-#include <glm/glm.hpp>
-
 auto main() -> int {
   auto vulkan_app_data = VulkanRootCreateinfo{
-      .width = 800,
-      .height = 600,
-      .window_resizable = true,
+      .width = 1920,
+      .height = 1080,
+      .window_resizable = false,
       .window_name = "Vulkan App",
       .application_info =
           vk::ApplicationInfo{.applicationVersion = VK_MAKE_VERSION(1, 0, 0),

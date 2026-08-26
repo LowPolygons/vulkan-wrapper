@@ -1,13 +1,12 @@
 #ifndef VUKLKAN_WRAPPER_IMPLEMENTATION_HH
 #define VUKLKAN_WRAPPER_IMPLEMENTATION_HH
 
-#include "debugger/debugger_container.hh"
-#include "device/device_and_queue_container.hh"
-#include "glfw/glfw_window_handler.hh"
-#include "instance_and_surface/instance_and_surface_container.hh"
-#include "swapchain/swapchain_info_container.hh"
 #include "vulkan/vulkan.hpp"
-#include <iostream>
+#include "vulkan_wrapper/debugger/debugger_container.hh"
+#include "vulkan_wrapper/device/device_and_queue_container.hh"
+#include "vulkan_wrapper/glfw/glfw_window_handler.hh"
+#include "vulkan_wrapper/instance_and_surface/instance_and_surface_container.hh"
+#include "vulkan_wrapper/swapchain/swapchain_info_container.hh"
 #include <vulkan/vulkan_core.h>
 
 struct VulkanAppTickState {

@@ -1,4 +1,4 @@
-#include "sync_object_container.hh"
+#include "vulkan_wrapper/syncs/sync_object_container.hh"
 
 auto SyncObjects::SyncObjectsContainer::fence(std::size_t index)
     -> vk::raii::Fence & {

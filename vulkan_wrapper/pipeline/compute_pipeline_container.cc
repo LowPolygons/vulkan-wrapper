@@ -1,5 +1,5 @@
-#include "compute_pipeline_container.hh"
-#include "../shaders/shader_utils.hh"
+#include "vulkan_wrapper/pipeline/compute_pipeline_container.hh"
+#include "vulkan_wrapper/shaders/shader_utils.hh"
 
 auto ComputePipeline::ComputePipelineContainer::layout()
     -> vk::raii::PipelineLayout & {

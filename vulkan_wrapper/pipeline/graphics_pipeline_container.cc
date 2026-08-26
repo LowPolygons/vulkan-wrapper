@@ -1,8 +1,8 @@
 
-#include "graphics_pipeline_container.hh"
+#include "vulkan_wrapper/pipeline/graphics_pipeline_container.hh"
 #include <vulkan/vulkan_raii.hpp>
 
-#include "../shaders/shader_utils.hh"
+#include "vulkan_wrapper/shaders/shader_utils.hh"
 
 auto GraphicsPipeline::PipelineContainer::pipeline() -> vk::raii::Pipeline & {
   return _pipeline;

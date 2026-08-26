@@ -1,13 +1,12 @@
 #ifndef VULKAN_WRAPPER_ARBITRARY_GPU_DATA_BUFFER_HH
 #define VULKAN_WRAPPER_ARBITRARY_GPU_DATA_BUFFER_HH
 
-#include "buffer_copy.hh"
-#include "data_buffer_container.hh"
+#include "vulkan_wrapper/buffers/buffer_copy.hh"
 #include <expected>
 #include <vulkan/vulkan.hpp>
 #include <vulkan/vulkan_raii.hpp>
 
-#include "../device/helpers.hh"
+#include "vulkan_wrapper/device/helpers.hh"
 
 namespace BufferUtils {
 
@@ -58,7 +57,8 @@ auto BufferUtils::ArbitraryGpuDataContainer<BT>::buffer()
 template <typename BT>
 auto BufferUtils::ArbitraryGpuDataContainer<BT>::address(
     vk::raii::Device &device) -> vk::DeviceAddress {
-  auto info = vk::BufferDeviceAddressInfo{.buffer = _buffer};
+  auto info = vk::BufferDeviceAddressInfo{};
+  info.buffer = _buffer;
 
   return device.getBufferAddress(info);
 }

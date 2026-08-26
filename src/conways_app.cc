@@ -1,7 +1,7 @@
 #include "conways_app.hh"
-#include "buffers/arbitrary_gpu_data_buffer.hh"
-#include "buffers/transition_buffer_layout.hh"
-#include "pipeline/compute_pipeline_container.hh"
+#include "vulkan_wrapper/buffers/arbitrary_gpu_data_buffer.hh"
+#include "vulkan_wrapper/buffers/transition_buffer_layout.hh"
+#include "vulkan_wrapper/pipeline/compute_pipeline_container.hh"
 #include <GLFW/glfw3.h>
 #include <random>
 

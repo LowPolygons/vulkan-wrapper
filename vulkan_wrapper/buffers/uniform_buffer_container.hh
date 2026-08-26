@@ -1,7 +1,7 @@
 #ifndef VULKAN_WRAPPER_UNIFORM_BUFFER_CONTAINER_HH
 #define VULKAN_WRAPPER_UNIFORM_BUFFER_CONTAINER_HH
 
-#include "../device/helpers.hh"
+#include "vulkan_wrapper/device/helpers.hh"
 #include <expected>
 #include <string>
 #include <vulkan/vulkan_raii.hpp>

@@ -1,4 +1,4 @@
-#include "shader_utils.hh"
+#include "vulkan_wrapper/shaders/shader_utils.hh"
 #include <fstream>
 
 auto ShaderUtils::read_shader(std::string shader_path)

@@ -1,8 +1,7 @@
 #include "3d_app.hh"
-#include "buffers/transition_buffer_layout.hh"
-#include "buffers/uniform_buffer_container.hh"
-#include "device/helpers.hh"
 #include "vulkan/vulkan.hpp"
+#include "vulkan_wrapper/buffers/transition_buffer_layout.hh"
+#include "vulkan_wrapper/buffers/uniform_buffer_container.hh"
 #include <chrono>
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/gtc/matrix_transform.hpp>

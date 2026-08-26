@@ -1,13 +1,13 @@
 #ifndef VULKAN_WRAPPER_COMPUTE_AND_FRAG_TEST_APP_HH
 #define VULKAN_WRAPPER_COMPUTE_AND_FRAG_TEST_APP_HH
 
-#include "buffers/arbitrary_gpu_data_buffer.hh"
-#include "buffers/command_buffer_container.hh"
-#include "buffers/data_buffer_container.hh"
-#include "pipeline/compute_pipeline_container.hh"
-#include "pipeline/graphics_pipeline_container.hh"
-#include "syncs/sync_object_container.hh"
-#include "wrapper_boilerplate.hh"
+#include "vulkan_wrapper/buffers/arbitrary_gpu_data_buffer.hh"
+#include "vulkan_wrapper/buffers/command_buffer_container.hh"
+#include "vulkan_wrapper/buffers/data_buffer_container.hh"
+#include "vulkan_wrapper/pipeline/compute_pipeline_container.hh"
+#include "vulkan_wrapper/pipeline/graphics_pipeline_container.hh"
+#include "vulkan_wrapper/syncs/sync_object_container.hh"
+#include "vulkan_wrapper/wrapper_boilerplate.hh"
 #include <glm/fwd.hpp>
 #include <glm/glm.hpp>
 

@@ -5,16 +5,52 @@ project(vulkan_app LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-set(SHADER_SLANG_SOURCES
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/shaders/conways_game_of_life.slang
-)
-message(STATUS "Shader sources: ${SHADER_SLANG_SOURCES}")
-
-find_program(SLANGC_EXECUTABLE slangc REQUIRED)
 
 find_package(Vulkan REQUIRED)
 find_package(glfw3 REQUIRED)
 find_package(glm REQUIRED)
+
+# Vulkan Wrapper Library
+add_library(vulkan_wrapper
+    vulkan_wrapper/glfw/glfw_window_handler.cc
+    vulkan_wrapper/device/helpers.cc
+    vulkan_wrapper/device/device_and_queue_container.cc
+    vulkan_wrapper/instance_and_surface/instance_and_surface_container.cc
+    vulkan_wrapper/swapchain/swapchain_info_container.cc
+    vulkan_wrapper/buffers/buffer_copy.cc
+    vulkan_wrapper/buffers/data_buffer_container.cc
+    vulkan_wrapper/shaders/shader_utils.cc
+    vulkan_wrapper/pipeline/graphics_pipeline_container.cc
+    vulkan_wrapper/buffers/command_buffer_container.cc
+    vulkan_wrapper/buffers/command_buffer_container.cc
+    vulkan_wrapper/buffers/transition_buffer_layout.cc
+    vulkan_wrapper/syncs/sync_object_container.cc
+    vulkan_wrapper/pipeline/compute_pipeline_container.cc
+    vulkan_wrapper/debugger/debugger_container.cc
+    vulkan_wrapper/wrapper_boilerplate.cc
+)
+
+target_include_directories(vulkan_wrapper PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+target_link_libraries(vulkan_wrapper PUBLIC
+    Vulkan::Vulkan
+    glfw
+    glm::glm
+)
+
+
+target_compile_definitions(vulkan_wrapper PUBLIC
+    VULKAN_HPP_NO_STRUCT_CONSTRUCTORS
+    VULKAN_HPP_HANDLE_ERROR_OUT_OF_DATE_AS_SUCCESS
+)
+
+find_program(SLANGC_EXECUTABLE slangc REQUIRED)
+set(SHADER_SLANG_SOURCES
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/shaders/conways_game_of_life.slang
+)
+message(STATUS "Shader sources: ${SHADER_SLANG_SOURCES}")
 
 function (add_slang_shader_target TARGET)
     # thank god this was written for me by khronos because what is going on here
@@ -37,42 +73,22 @@ function (add_slang_shader_target TARGET)
 endfunction()
 
 add_executable(vulkan_app
-    src/glfw/glfw_window_handler.cc
-    src/device/helpers.cc
-    src/device/device_and_queue_container.cc
-    src/instance_and_surface/instance_and_surface_container.cc
-    src/swapchain/swapchain_info_container.cc
-    src/buffers/buffer_copy.cc
-    src/buffers/data_buffer_container.cc
-    src/shaders/shader_utils.cc
-    src/pipeline/graphics_pipeline_container.cc
-    src/buffers/command_buffer_container.cc
-    src/buffers/command_buffer_container.cc
-    src/buffers/transition_buffer_layout.cc
-    src/syncs/sync_object_container.cc
-    src/wrapper_boilerplate.cc
     src/mandelbulb_app.cc
     src/3d_app.cc
     src/conways_app.cc
-    src/pipeline/compute_pipeline_container.cc
-    src/debugger/debugger_container.cc
     src/main.cpp
 )
 
-
 add_slang_shader_target( shaders SOURCES ${SHADER_SLANG_SOURCES})
+
 add_dependencies(vulkan_app 
     shaders
 )
 
 target_link_libraries(vulkan_app PRIVATE
-    Vulkan::Vulkan
-    glfw
-    glm::glm
+    vulkan_wrapper
 )
 
-target_compile_definitions(vulkan_app PRIVATE
-    VULKAN_HPP_NO_STRUCT_CONSTRUCTORS
-    # IMPERATIVE if you want to be able to resize without crashing
-    VULKAN_HPP_HANDLE_ERROR_OUT_OF_DATE_AS_SUCCESS
+target_include_directories(vulkan_app PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}
 )

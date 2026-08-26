@@ -1,4 +1,4 @@
-#include "transition_buffer_layout.hh"
+#include "vulkan_wrapper/buffers/transition_buffer_layout.hh"
 
 // WARN: copied directly from
 // The idea is that images are generic to be specialisable fro different

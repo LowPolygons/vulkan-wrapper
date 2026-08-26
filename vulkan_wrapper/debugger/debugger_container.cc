@@ -1,4 +1,4 @@
-#include "debugger_container.hh"
+#include "vulkan_wrapper/debugger/debugger_container.hh"
 
 // TODO: better understand this function signature to allow a more modular
 // wrapper

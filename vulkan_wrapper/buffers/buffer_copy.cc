@@ -1,4 +1,4 @@
-#include "buffer_copy.hh"
+#include "vulkan_wrapper/buffers/buffer_copy.hh"
 
 auto BufferUtils::copy_host_buffer_to_gpu_buffer(
     vk::raii::Device &device, vk::raii::Queue &queue,

@@ -1,6 +1,6 @@
 
-#include "data_buffer_container.hh"
-#include "../device/helpers.hh"
+#include "vulkan_wrapper/buffers/data_buffer_container.hh"
+#include "vulkan_wrapper/device/helpers.hh"
 #include <vulkan/vulkan_raii.hpp>
 
 auto BufferUtils::FactoryHelper::allocate_memory_on_host_and_device(

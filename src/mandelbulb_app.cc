@@ -1,9 +1,9 @@
 #include "mandelbulb_app.hh"
-#include "buffers/data_buffer_container.hh"
-#include "buffers/transition_buffer_layout.hh"
-#include "pipeline/graphics_pipeline_container.hh"
-#include "syncs/sync_object_container.hh"
-#include "wrapper_boilerplate.hh"
+#include "vulkan_wrapper/buffers/data_buffer_container.hh"
+#include "vulkan_wrapper/buffers/transition_buffer_layout.hh"
+#include "vulkan_wrapper/pipeline/graphics_pipeline_container.hh"
+#include "vulkan_wrapper/syncs/sync_object_container.hh"
+#include "vulkan_wrapper/wrapper_boilerplate.hh"
 #include <optional>
 
 auto MandelbulbApp::create(MandelbulbAppCreateInfo info, VulkanRoot &root,
