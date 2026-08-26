@@ -48,7 +48,7 @@ target_compile_definitions(vulkan_wrapper PUBLIC
 
 find_program(SLANGC_EXECUTABLE slangc REQUIRED)
 set(SHADER_SLANG_SOURCES
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/apps/conways/conways_game_of_life.slang
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/apps/shader_hashing/shader_hash.slang
 )
 message(STATUS "Shader sources: ${SHADER_SLANG_SOURCES}")
 
@@ -62,20 +62,21 @@ function (add_slang_shader_target TARGET)
         COMMAND ${CMAKE_COMMAND} -E make_directory ${SHADERS_DIR}
     )
   add_custom_command (
-          OUTPUT  ${SHADERS_DIR}/conways.spv
-          COMMAND ${SLANGC_EXECUTABLE} ${SHADER_SOURCES} -target spirv -profile spirv_1_4 -emit-spirv-directly -fvk-use-entrypoint-name ${ENTRY_POINTS} -o conways.spv
+          OUTPUT  ${SHADERS_DIR}/shader_hash.spv
+          COMMAND ${SLANGC_EXECUTABLE} ${SHADER_SOURCES} -target spirv -profile spirv_1_4 -emit-spirv-directly -fvk-use-entrypoint-name ${ENTRY_POINTS} -o shader_hash.spv
           WORKING_DIRECTORY ${SHADERS_DIR}
           DEPENDS ${SHADERS_DIR} ${SHADER_SOURCES}
           COMMENT "Compiling Slang Shaders"
           VERBATIM
   )
-  add_custom_target (${TARGET} DEPENDS ${SHADERS_DIR}/conways.spv)
+  add_custom_target (${TARGET} DEPENDS ${SHADERS_DIR}/shader_hash.spv)
 endfunction()
 
 add_executable(vulkan_app
     # src/mandelbulb_app.cc
     # src/3d_app.cc
-    src/apps/conways/conways_app.cc
+    # src/apps/conways/conways_app.cc
+    src/apps/shader_hashing/shader_hash.cc
     src/main.cpp
 )
 
