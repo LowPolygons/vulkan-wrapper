@@ -223,11 +223,10 @@ void compMain(uint3 thread_id: SV_DispatchThreadID)
         uint8_t *new_state_buffer = (properties.alternator == 1) ? properties.state_address_a : properties.state_address_b;
 
         new_state_buffer[(y_index * properties.sim_width) + x_index] = 1;
-
-        for (int i = 0; i < 8; i++)
-        {
-            new_state_buffer[addresses[i]] = 1;
-        }
+        new_state_buffer[addresses[1]] = 1;
+        new_state_buffer[addresses[3]] = 1;
+        new_state_buffer[addresses[4]] = 1;
+        new_state_buffer[addresses[6]] = 1;
     }
 }
 

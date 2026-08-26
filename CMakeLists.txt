@@ -48,7 +48,7 @@ target_compile_definitions(vulkan_wrapper PUBLIC
 
 find_program(SLANGC_EXECUTABLE slangc REQUIRED)
 set(SHADER_SLANG_SOURCES
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/shaders/conways_game_of_life.slang
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/apps/conways/conways_game_of_life.slang
 )
 message(STATUS "Shader sources: ${SHADER_SLANG_SOURCES}")
 
@@ -73,9 +73,9 @@ function (add_slang_shader_target TARGET)
 endfunction()
 
 add_executable(vulkan_app
-    src/mandelbulb_app.cc
-    src/3d_app.cc
-    src/conways_app.cc
+    # src/mandelbulb_app.cc
+    # src/3d_app.cc
+    src/apps/conways/conways_app.cc
     src/main.cpp
 )
 

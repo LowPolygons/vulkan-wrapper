@@ -36,20 +36,27 @@ struct Vertex {
   }
 };
 
-// Push Constants for frag shader
+// Push constants
 struct ConwaysState {
+  // Size of the sim, stretched/shrank to fit the screen size
   glm::uint32_t sim_width;
   glm::uint32_t sim_height;
+  // Conways needs a previous and current state buffer
   vk::DeviceAddress state_address_a;
   vk::DeviceAddress state_address_b;
+  // Just a 1 or 0 to use as a tracker for which buffer is current
   glm::uint32_t alternator;
+  // Actual window size
   glm::f32 win_x;
   glm::f32 win_y;
+  // Currently Unused
   glm::f32 time;
   glm::f32 ___padding___;
+  // Mouse X/Y are relative to the window size, the shader handles the scaling
   glm::uint32_t mouse_x;
   glm::uint32_t mouse_y;
   glm::uint32_t mouse_down;
+  // Paused by default, holding space plays the sim
   glm::uint32_t paused;
 };
 

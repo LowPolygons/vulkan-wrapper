@@ -3,6 +3,7 @@
 #include "vulkan_wrapper/buffers/transition_buffer_layout.hh"
 #include "vulkan_wrapper/pipeline/compute_pipeline_container.hh"
 #include <GLFW/glfw3.h>
+#include <print>
 #include <random>
 
 auto ConwaysGameOfLife::is_running() -> bool { return true; }
@@ -308,8 +309,8 @@ auto create_conways_app(VulkanRoot &root)
           vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG |
           vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA};
 
-  uint16_t width = 1920;
-  uint16_t height = 1080;
+  uint16_t width = 300;
+  uint16_t height = 168;
   std::vector<uint8_t> initial_state(width * height);
 
   std::random_device rd;
@@ -360,6 +361,8 @@ auto create_conways_app(VulkanRoot &root)
       .sim_width = width,
       .sim_height = height,
       .initial_state = initial_state};
+
+  std::println("Size of App Push Constant: {} Bytes", sizeof(ConwaysState));
 
   auto maybe_app = ConwaysGameOfLife::create(app_create_info, root,
                                              {{{-1.0, -1.0}, {0.0, 0.0, 0.0}},
