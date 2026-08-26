@@ -1,5 +1,5 @@
-rm -rf build/
+# rm -rf build/
 
-cmake -S . -B build
+CXX=clang++-20 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 
 cmake --build build
