@@ -95,6 +95,8 @@ auto MandelbulbApp::get_current_state(
   if (fence_result != vk::Result::eSuccess)
     return std::unexpected("Failed to wait for the draw fences");
 
+  logical_device.resetFences(*fence_ref);
+
   auto &present_complete_sem =
       sync_objects.present_complete_semaphore(current_frame_index);
 

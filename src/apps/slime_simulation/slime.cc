@@ -201,6 +201,7 @@ auto SlimeApp::get_current_state(
 
   a_is_current = (a_is_current == 1) ? 0 : 1;
 
+  // std::println("Tick");
   auto push_constants = SlimePushConstant{
       .sim_width = sim_width,
       .sim_height = sim_height,
@@ -225,6 +226,8 @@ auto SlimeApp::get_current_state(
 
   if (fence_result != vk::Result::eSuccess)
     return std::unexpected("Failed to wait for the draw fences");
+
+  logical_device.resetFences(*fence_ref);
 
   auto &present_complete_sem =
       sync_objects.present_complete_semaphore(current_frame_index);
@@ -436,7 +439,7 @@ auto create_slime_app(VulkanRoot &root)
                   .size = sizeof(SlimePushConstant)}}},
       .sim_width = width,
       .sim_height = height,
-      .num_slimes = 100000,
+      .num_slimes = 2000000,
   };
 
   auto maybe_app = SlimeApp::create(app_create_info, root);
