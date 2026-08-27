@@ -3,6 +3,7 @@
 
 #include "vulkan_wrapper/buffers/buffer_copy.hh"
 #include <expected>
+#include <print>
 #include <vulkan/vulkan.hpp>
 #include <vulkan/vulkan_raii.hpp>
 
@@ -99,7 +100,7 @@ auto BufferUtils::ArbitraryGpuDataContainer<BT>::create(
       vk::BufferUsageFlagBits::eTransferDst |
           vk::BufferUsageFlagBits::eShaderDeviceAddress |
           vk::BufferUsageFlagBits::eStorageBuffer |
-          vk::BufferUsageFlagBits::eStorageBuffer,
+          vk::BufferUsageFlagBits::eShaderDeviceAddress,
       vk::MemoryPropertyFlagBits::eDeviceLocal);
 
   if (!maybe_device_buff_and_mem)
@@ -116,6 +117,10 @@ auto BufferUtils::ArbitraryGpuDataContainer<BT>::create(
   auto object = BufferUtils::ArbitraryGpuDataContainer<BT>(
       std::move(device_buff), std::move(device_mem), buffer_size);
 
+  std::println(
+      "[ArbitraryGpuDataContainer Info] Allocated a buffer of size {} Bytes "
+      "on the device",
+      buffer_size);
   return object;
 }
 #endif
