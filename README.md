@@ -1,9 +1,15 @@
-# Vulkan Wrapper 
+# Vulkan Wrapper
 
 ## Conways Game of Life App
+
 ![Conways](conways_hello_world.png)
 
+## Slime Simulation
+
+![Slime](slime_simulation.png)
+
 ## VulkanRoot
+
 ```cpp
 struct VulkanRoot {
   run_app(VulkanAppInterface&) -> std::expected<void, std::string>
@@ -21,6 +27,7 @@ struct VulkanRoot {
 This VulkanRoot contains all the information that is shared across many different vulkan apps
 
 ## VulkanApp
+
 ```cpp
 struct VulkanAppInterface {
   is_running() -> bool
@@ -30,7 +37,8 @@ struct VulkanAppInterface {
 
 An app to be used by the Vulkan Renderer must implement this interface
 
-## VulkanAppTickState 
+## VulkanAppTickState
+
 ```cpp
 struct VulkanAppTickState {
   vk::raii::Fence &fence_ref;
@@ -45,6 +53,7 @@ struct VulkanAppTickState {
 ```
 
 ## Example Usage
+
 ```cpp
 
 VulkanRoot vulkan{..initialised..};
@@ -64,11 +73,10 @@ VulkanRoot::run_app(App& app) {
     if (swapchain needs recreating) {
       recreate_swap_chain()
     }
-  
+
     run_frame(current_state)
 
     .. confirm success ..
   }
 }
 ```
-
