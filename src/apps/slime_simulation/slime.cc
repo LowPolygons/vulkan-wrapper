@@ -1,14 +1,14 @@
-#include "src/apps/shader_hashing/shader_hash.hh"
 #include "src/apps/slime_simulation/slime.hh"
 #include "vulkan_wrapper/buffers/arbitrary_gpu_data_buffer.hh"
 #include "vulkan_wrapper/buffers/transition_buffer_layout.hh"
-#include <iostream>
+#include <cmath>
 #include <print>
+#include <random>
 
-auto ShaderHashApp::is_running() -> bool { return true; }
+auto SlimeApp::is_running() -> bool { return true; }
 
-auto ShaderHashApp::create(ShaderHashCreateInfo info, VulkanRoot &root)
-    -> std::expected<ShaderHashApp, std::string> {
+auto SlimeApp::create(SlimeCreateInfo info, VulkanRoot &root)
+    -> std::expected<SlimeApp, std::string> {
 
   auto vertices = std::vector<Vertex>{{{-1.0, -1.0}, {0.0, 0.0, 0.0}},
                                       {{1.0, -1.0}, {1.0, 0.0, 0.0}},
@@ -21,21 +21,33 @@ auto ShaderHashApp::create(ShaderHashCreateInfo info, VulkanRoot &root)
       root.swapchain_info.surface_format(), nullptr);
 
   if (!maybe_pipeline_container)
-    return std::unexpected("ShaderHashApp Pipeline Container Init Error : " +
+    return std::unexpected("SlimeApp Pipeline Container Init Error : " +
                            maybe_pipeline_container.error());
 
   auto extracted_pipeline_container =
       std::move(maybe_pipeline_container.value());
 
-  auto maybe_compute_pipeline =
+  auto maybe_compute_pipeline_texture =
       ComputePipeline::ComputePipelineContainer::create(
-          info.compute_details, root.device_and_queue.logical());
+          info.compute_details_texture, root.device_and_queue.logical());
 
-  if (!maybe_compute_pipeline)
-    return std::unexpected("ShaderHashApp Compute Pipeline Init Error : " +
-                           maybe_compute_pipeline.error());
+  if (!maybe_compute_pipeline_texture)
+    return std::unexpected("SlimeApp Texture Compute Pipeline Init Error : " +
+                           maybe_compute_pipeline_texture.error());
 
-  auto extracted_compute_pipeline = std::move(maybe_compute_pipeline.value());
+  auto extracted_compute_pipeline_texture =
+      std::move(maybe_compute_pipeline_texture.value());
+
+  auto maybe_compute_pipeline_slime =
+      ComputePipeline::ComputePipelineContainer::create(
+          info.compute_details_slime, root.device_and_queue.logical());
+
+  if (!maybe_compute_pipeline_slime)
+    return std::unexpected("SlimeApp Slime Compute Pipeline Init Error : " +
+                           maybe_compute_pipeline_slime.error());
+
+  auto extracted_compute_pipeline_slime =
+      std::move(maybe_compute_pipeline_slime.value());
 
   auto maybe_command_buffer =
       BufferUtils::CommandPoolAndBuffersContainer::create(
@@ -44,7 +56,7 @@ auto ShaderHashApp::create(ShaderHashCreateInfo info, VulkanRoot &root)
           root.device_and_queue.logical(), root.device_and_queue.queue_index());
 
   if (!maybe_command_buffer)
-    return std::unexpected("ShaderHashApp Command Buffer Init Error : " +
+    return std::unexpected("SlimeApp Command Buffer Init Error : " +
                            maybe_command_buffer.error());
 
   auto extracted_command_buffers = std::move(maybe_command_buffer.value());
@@ -63,7 +75,7 @@ auto ShaderHashApp::create(ShaderHashCreateInfo info, VulkanRoot &root)
               .command_pool = extracted_command_buffers.command_pool()});
 
   if (!maybe_data_buffers)
-    return std::unexpected("ShaderHashApp Data Buffers Init Error : " +
+    return std::unexpected("SlimeApp Data Buffers Init Error : " +
                            maybe_data_buffers.error());
 
   auto extraced_data_buffers = std::move(maybe_data_buffers.value());
@@ -73,48 +85,110 @@ auto ShaderHashApp::create(ShaderHashCreateInfo info, VulkanRoot &root)
       info.max_frames_in_flight, root.device_and_queue.logical());
 
   if (!maybe_sync_objects)
-    return std::unexpected("ShaderHashApp Sync Objects Init Error : " +
+    return std::unexpected("SlimeApp Sync Objects Init Error : " +
                            maybe_sync_objects.error());
 
   auto extracted_sync_objects = std::move(maybe_sync_objects.value());
 
-  // Generate default data
-  auto initial_state = std::vector<ShaderHashTextureColour>{{}};
+  // Generate default data for texture mesh and slimes
+  auto initial_mesh_state = std::vector<TextureColour>{};
+  auto initial_slimes_state = std::vector<Slime>{};
 
   for (auto i = 0; i < info.sim_height * info.sim_width; i++) {
-    initial_state.emplace_back(
-        ShaderHashTextureColour{.r = 123, .g = 10, .b = 201});
+    initial_mesh_state.emplace_back(TextureColour{.r = 0, .g = 0, .b = 0});
   }
 
-  auto maybe_arbitrary_buffer_data =
-      BufferUtils::ArbitraryGpuDataContainer<ShaderHashTextureColour>::create(
+  auto rand_gen = std::mt19937{std::random_device{}()};
+
+  auto angle_distribution = std::uniform_real_distribution<float>(
+      0.0f, 2.0f * std::numbers::pi_v<float>);
+
+  auto radius_distribution = std::uniform_real_distribution<float>(0.0f, 1.0f);
+
+  const glm::vec2 center{
+      static_cast<float>(info.sim_width) / 2.0f,
+      static_cast<float>(info.sim_height) / 2.0f,
+  };
+
+  const float radius = static_cast<float>(info.sim_width) * 0.2f;
+
+  for (auto i = 0; i < info.num_slimes; i++) {
+    auto slime = Slime{};
+
+    slime.family_index = 0;
+
+    const float theta = angle_distribution(rand_gen);
+    const float r = radius * std::sqrt(radius_distribution(rand_gen));
+
+    slime.position =
+        center + glm::vec2{r * std::cos(theta), r * std::sin(theta)};
+
+    const glm::vec2 to_center = center - slime.position;
+
+    slime.angle = std::atan2(to_center.y, to_center.x);
+
+    initial_slimes_state.push_back(slime);
+  }
+
+  auto maybe_arbitrary_buffer_data_texture_a =
+      BufferUtils::ArbitraryGpuDataContainer<TextureColour>::create(
           BufferUtils::NeededObjects{
               .physical_ref = root.device_and_queue.physical(),
               .logical_ref = root.device_and_queue.logical(),
               .queue_ref = root.device_and_queue.queue(),
               .command_pool = extracted_command_buffers.command_pool()},
-          initial_state);
+          initial_mesh_state);
 
-  if (!maybe_arbitrary_buffer_data)
-    return std::unexpected(
-        "ShaderHashApp ArbitraryGpuDataContainer Init Error:" +
-        maybe_arbitrary_buffer_data.error());
+  auto maybe_arbitrary_buffer_data_texture_b =
+      BufferUtils::ArbitraryGpuDataContainer<TextureColour>::create(
+          BufferUtils::NeededObjects{
+              .physical_ref = root.device_and_queue.physical(),
+              .logical_ref = root.device_and_queue.logical(),
+              .queue_ref = root.device_and_queue.queue(),
+              .command_pool = extracted_command_buffers.command_pool()},
+          initial_mesh_state);
 
-  auto extracted_arbitrary_buffer =
-      std::move(maybe_arbitrary_buffer_data.value());
+  auto maybe_arbitrary_buffer_data_slime =
+      BufferUtils::ArbitraryGpuDataContainer<Slime>::create(
+          BufferUtils::NeededObjects{
+              .physical_ref = root.device_and_queue.physical(),
+              .logical_ref = root.device_and_queue.logical(),
+              .queue_ref = root.device_and_queue.queue(),
+              .command_pool = extracted_command_buffers.command_pool()},
+          initial_slimes_state);
 
-  auto object = ShaderHashApp(
+  if (!maybe_arbitrary_buffer_data_texture_a)
+    return std::unexpected("SlimeApp ArbitraryGpuDataContainer Init Error:" +
+                           maybe_arbitrary_buffer_data_texture_a.error());
+  if (!maybe_arbitrary_buffer_data_texture_b)
+    return std::unexpected("SlimeApp ArbitraryGpuDataContainer Init Error:" +
+                           maybe_arbitrary_buffer_data_texture_a.error());
+  if (!maybe_arbitrary_buffer_data_slime)
+    return std::unexpected("SlimeApp ArbitraryGpuDataContainer Init Error:" +
+                           maybe_arbitrary_buffer_data_slime.error());
+
+  auto extracted_arbitrary_buffer_texture_a =
+      std::move(maybe_arbitrary_buffer_data_texture_a.value());
+  auto extracted_arbitrary_buffer_texture_b =
+      std::move(maybe_arbitrary_buffer_data_texture_b.value());
+  auto extracted_arbitrary_buffer_slime =
+      std::move(maybe_arbitrary_buffer_data_slime.value());
+
+  auto object = SlimeApp(
       std::move(extracted_pipeline_container),
-      std::move(extracted_compute_pipeline),
+      std::move(extracted_compute_pipeline_texture),
+      std::move(extracted_compute_pipeline_slime),
       std::move(extracted_command_buffers), std::move(extraced_data_buffers),
-      std::move(extracted_sync_objects), std::move(extracted_arbitrary_buffer),
-      info.max_frames_in_flight, info.default_colour,
-      {info.sim_width, info.sim_height});
+      std::move(extracted_sync_objects),
+      std::move(extracted_arbitrary_buffer_texture_a),
+      std::move(extracted_arbitrary_buffer_texture_b),
+      std::move(extracted_arbitrary_buffer_slime), info.max_frames_in_flight,
+      info.default_colour, {info.sim_width, info.sim_height}, info.num_slimes);
 
   return object;
 }
 
-auto ShaderHashApp::get_current_state(
+auto SlimeApp::get_current_state(
     std::shared_ptr<GLFWwindow> window, vk::raii::Device &logical_device,
     SwapchainInfo::SwapchainInfoContainer &swapchain_state)
     -> std::expected<std::optional<VulkanAppTickState>, std::string> {
@@ -122,19 +196,26 @@ auto ShaderHashApp::get_current_state(
   graphics_pipeline_data.update_dynamic_objects(swapchain_state.dimensions());
 
   if (glfwGetKey(window.get(), GLFW_KEY_SPACE) == GLFW_PRESS) {
-    seed_offset++;
+    tick = tick + 0.0001;
   }
 
-  auto push_constants = ShaderHashPushConstant{
+  a_is_current = (a_is_current == 1) ? 0 : 1;
+
+  auto push_constants = SlimePushConstant{
       .sim_width = sim_width,
       .sim_height = sim_height,
       .win_width =
           static_cast<glm::uint32_t>(swapchain_state.dimensions().width),
       .win_height =
           static_cast<glm::uint32_t>(swapchain_state.dimensions().height),
-      .colour_address =
-          static_cast<glm::uint64_t>(shader_buffer.address(logical_device)),
-      .seed_offset = seed_offset};
+      .slimes = static_cast<glm::uint64_t>(slimes.address(logical_device)),
+      .num_slimes = static_cast<glm::uint32_t>(num_slimes),
+      .texture_mesh_a =
+          static_cast<glm::uint64_t>(texture_mesh_a.address(logical_device)),
+      .texture_mesh_b =
+          static_cast<glm::uint64_t>(texture_mesh_b.address(logical_device)),
+      .alternator = a_is_current,
+      .tick = tick};
 
   // This stuff is mostly the same across apps
   auto &fence_ref = sync_objects.fence(current_frame_index);
@@ -194,34 +275,55 @@ auto ShaderHashApp::get_current_state(
   return state_info;
 }
 
-auto ShaderHashApp::record_command_buffer(ShaderHashPushConstant push_constants,
-                                          vk::Image &transition_image,
-                                          vk::raii::ImageView &image_view,
-                                          vk::Rect2D render_area,
-                                          vk::Viewport viewport,
-                                          vk::Rect2D scissor) -> void {
+auto SlimeApp::record_command_buffer(SlimePushConstant push_constants,
+                                     vk::Image &transition_image,
+                                     vk::raii::ImageView &image_view,
+                                     vk::Rect2D render_area,
+                                     vk::Viewport viewport, vk::Rect2D scissor)
+    -> void {
   auto &command_buffer =
       command_pool_and_buffers.get_buffer_ref(current_frame_index);
-
-  auto num_workgroups =
-      // Forces an integer ceil (assuming the numthredas in shader is 64,1,1)
-      (push_constants.sim_width * push_constants.sim_height + 63) / 64;
 
   command_buffer.reset();
   command_buffer.begin({});
 
-  command_buffer.bindPipeline(vk::PipelineBindPoint::eCompute,
-                              compute_pipeline_data.pipeline());
-  command_buffer.pushConstants(compute_pipeline_data.layout(),
-                               vk::ShaderStageFlagBits::eCompute, 0,
-                               sizeof(ShaderHashPushConstant), &push_constants);
-  command_buffer.dispatch(num_workgroups, 1, 1);
+  // Forces an integer ceil (assuming the numthredas in shader is 64,1,1)
+  auto mesh_num_workgroups =
+      (push_constants.sim_width * push_constants.sim_height + 63) / 64;
+  auto slimes_num_workgroups = (push_constants.num_slimes + 63) / 64;
 
-  // Basically saying that the graphics stage of the pipeline needs to read
-  // memory that a compute shader wrote so it needs synchronisin2654435779ug
-  auto pipeline_barrier_info = vk::MemoryBarrier2{
+  command_buffer.bindPipeline(vk::PipelineBindPoint::eCompute,
+                              compute_pipeline_data_mesh.pipeline());
+  command_buffer.pushConstants(compute_pipeline_data_mesh.layout(),
+                               vk::ShaderStageFlagBits::eCompute, 0,
+                               sizeof(SlimePushConstant), &push_constants);
+  command_buffer.dispatch(mesh_num_workgroups, 1, 1);
+
+  auto compute_pipeline_barrier_info = vk::MemoryBarrier2{
       .srcStageMask = vk::PipelineStageFlagBits2::eComputeShader,
       .srcAccessMask = vk::AccessFlagBits2::eShaderStorageWrite,
+      .dstStageMask = vk::PipelineStageFlagBits2::eComputeShader,
+      .dstAccessMask = vk::AccessFlagBits2::eShaderStorageRead |
+                       vk::AccessFlagBits2::eShaderStorageWrite};
+
+  command_buffer.pipelineBarrier2(vk::DependencyInfo{
+      .memoryBarrierCount = 1,
+      .pMemoryBarriers = &compute_pipeline_barrier_info,
+  });
+
+  command_buffer.bindPipeline(vk::PipelineBindPoint::eCompute,
+                              compute_pipeline_data_slime.pipeline());
+  command_buffer.pushConstants(compute_pipeline_data_slime.layout(),
+                               vk::ShaderStageFlagBits::eCompute, 0,
+                               sizeof(SlimePushConstant), &push_constants);
+  command_buffer.dispatch(slimes_num_workgroups, 1, 1);
+
+  // Basically saying that the graphics stage of the pipeline needs to read
+  // memory that a compute shader wrote so it needs synchronising
+  auto pipeline_barrier_info = vk::MemoryBarrier2{
+      .srcStageMask = vk::PipelineStageFlagBits2::eComputeShader,
+      .srcAccessMask = vk::AccessFlagBits2::eShaderStorageRead |
+                       vk::AccessFlagBits2::eShaderStorageWrite,
       .dstStageMask = vk::PipelineStageFlagBits2::eAllGraphics,
       .dstAccessMask = vk::AccessFlagBits2::eShaderStorageRead};
 
@@ -256,7 +358,7 @@ auto ShaderHashApp::record_command_buffer(ShaderHashPushConstant push_constants,
                               graphics_pipeline_data.pipeline());
   command_buffer.pushConstants(graphics_pipeline_data.layout(),
                                vk::ShaderStageFlagBits::eFragment, 0,
-                               sizeof(ShaderHashPushConstant), &push_constants);
+                               sizeof(SlimePushConstant), &push_constants);
 
   command_buffer.setViewport(0, viewport);
   command_buffer.setScissor(0, scissor);
@@ -277,8 +379,8 @@ auto ShaderHashApp::record_command_buffer(ShaderHashPushConstant push_constants,
   command_buffer.end();
 }
 
-auto create_shader_hash_app(VulkanRoot &root)
-    -> std::expected<ShaderHashApp, std::string> {
+auto create_slime_app(VulkanRoot &root)
+    -> std::expected<SlimeApp, std::string> {
   auto app_colour_blend_data = vk::PipelineColorBlendAttachmentState{
       .blendEnable = vk::False,
       .colorWriteMask =
@@ -288,11 +390,11 @@ auto create_shader_hash_app(VulkanRoot &root)
   uint16_t width = 1920;
   uint16_t height = 1080;
 
-  auto app_create_info = ShaderHashCreateInfo{
+  auto app_create_info = SlimeCreateInfo{
       .pipeline_details =
           GraphicsPipeline::PipelineContainerCreateInfo{
-              .vertex_shader_path = "shaders/shader_hash.spv",
-              .frag_shader_path = "shaders/shader_hash.spv",
+              .vertex_shader_path = "shaders/slime.spv",
+              .frag_shader_path = "shaders/slime.spv",
               .vertex_main_func_name = "vertMain",
               .frag_main_func_name = "fragMain",
               .binding_description = Vertex::get_binding_descriptions(),
@@ -312,22 +414,32 @@ auto create_shader_hash_app(VulkanRoot &root)
               .push_constant_ranges = std::vector{vk::PushConstantRange{
                   .stageFlags = vk::ShaderStageFlagBits::eFragment,
                   .offset = 0,
-                  .size = sizeof(ShaderHashPushConstant)}},
+                  .size = sizeof(SlimePushConstant)}},
           },
       .default_colour = vk::ClearColorValue(0.2, 0.2, 0.2, 1.0f),
       .max_frames_in_flight = 2,
-      .compute_details =
+      .compute_details_texture =
           ComputePipeline::ComputePipelineCreateInfo{
-              .compute_shader_path = "shaders/shader_hash.spv",
-              .compute_main_func = "compMain",
+              .compute_shader_path = "shaders/slime.spv",
+              .compute_main_func = "compTextureMain",
               .push_constant_ranges = {vk::PushConstantRange{
                   .stageFlags = vk::ShaderStageFlagBits::eCompute,
                   .offset = 0,
-                  .size = sizeof(ShaderHashPushConstant)}}},
+                  .size = sizeof(SlimePushConstant)}}},
+      .compute_details_slime =
+          ComputePipeline::ComputePipelineCreateInfo{
+              .compute_shader_path = "shaders/slime.spv",
+              .compute_main_func = "compSlimeMain",
+              .push_constant_ranges = {vk::PushConstantRange{
+                  .stageFlags = vk::ShaderStageFlagBits::eCompute,
+                  .offset = 0,
+                  .size = sizeof(SlimePushConstant)}}},
       .sim_width = width,
-      .sim_height = height};
+      .sim_height = height,
+      .num_slimes = 100000,
+  };
 
-  auto maybe_app = ShaderHashApp::create(app_create_info, root);
+  auto maybe_app = SlimeApp::create(app_create_info, root);
 
   return maybe_app;
 }

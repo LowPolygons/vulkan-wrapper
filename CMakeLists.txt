@@ -48,7 +48,7 @@ target_compile_definitions(vulkan_wrapper PUBLIC
 
 find_program(SLANGC_EXECUTABLE slangc REQUIRED)
 set(SHADER_SLANG_SOURCES
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/apps/shader_hashing/shader_hash.slang
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/apps/slime_simulation/slime.slang
 )
 message(STATUS "Shader sources: ${SHADER_SLANG_SOURCES}")
 
@@ -56,27 +56,27 @@ function (add_slang_shader_target TARGET)
     # thank god this was written for me by khronos because what is going on here
     cmake_parse_arguments ("SHADER" "" "" "SOURCES" ${ARGN})
     set (SHADERS_DIR ${CMAKE_CURRENT_LIST_DIR}/shaders)
-    set (ENTRY_POINTS -entry vertMain -entry fragMain -entry compMain)
+    set (ENTRY_POINTS -entry vertMain -entry fragMain -entry compTextureMain -entry compSlimeMain)
     add_custom_command (
         OUTPUT ${SHADERS_DIR}
         COMMAND ${CMAKE_COMMAND} -E make_directory ${SHADERS_DIR}
     )
   add_custom_command (
-          OUTPUT  ${SHADERS_DIR}/shader_hash.spv
-          COMMAND ${SLANGC_EXECUTABLE} ${SHADER_SOURCES} -target spirv -profile spirv_1_4 -emit-spirv-directly -fvk-use-entrypoint-name ${ENTRY_POINTS} -o shader_hash.spv
+          OUTPUT  ${SHADERS_DIR}/slime.spv
+          COMMAND ${SLANGC_EXECUTABLE} ${SHADER_SOURCES} -target spirv -profile spirv_1_4 -emit-spirv-directly -fvk-use-entrypoint-name ${ENTRY_POINTS} -o slime.spv
           WORKING_DIRECTORY ${SHADERS_DIR}
           DEPENDS ${SHADERS_DIR} ${SHADER_SOURCES}
           COMMENT "Compiling Slang Shaders"
           VERBATIM
   )
-  add_custom_target (${TARGET} DEPENDS ${SHADERS_DIR}/shader_hash.spv)
+  add_custom_target (${TARGET} DEPENDS ${SHADERS_DIR}/slime.spv)
 endfunction()
 
 add_executable(vulkan_app
     # src/mandelbulb_app.cc
     # src/3d_app.cc
     # src/apps/conways/conways_app.cc
-    src/apps/shader_hashing/shader_hash.cc
+    src/apps/slime_simulation/slime.cc
     src/main.cpp
 )
 

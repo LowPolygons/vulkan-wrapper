@@ -309,8 +309,8 @@ auto create_conways_app(VulkanRoot &root)
           vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG |
           vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA};
 
-  uint16_t width = 300;
-  uint16_t height = 168;
+  uint16_t width = 1920;
+  uint16_t height = 1080;
   std::vector<uint8_t> initial_state(width * height);
 
   std::random_device rd;

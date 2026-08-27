@@ -1,6 +1,7 @@
 
 // #include "apps/conways/conways_app.hh"
-#include "apps/shader_hashing/shader_hash.hh"
+// #include "apps/shader_hashing/shader_hash.hh"
+#include "apps/slime_simulation/slime.hh"
 #include "vulkan_wrapper/wrapper_boilerplate.hh"
 #include <GLFW/glfw3.h>
 #include <cstdlib>
@@ -33,8 +34,9 @@ auto main() -> int {
 
   auto vulkan_root = std::move(maybe_vulkan_root.value());
 
-  auto maybe_app = create_shader_hash_app(vulkan_root);
+  // auto maybe_app = create_shader_hash_app(vulkan_root);
   // auto maybe_app = create_conways_app(vulkan_root);
+  auto maybe_app = create_slime_app(vulkan_root);
   // auto maybe_app = create_mandelbulb_app(vulkan_root);
   // auto maybe_app = create_3d_app(vulkan_root);
 
