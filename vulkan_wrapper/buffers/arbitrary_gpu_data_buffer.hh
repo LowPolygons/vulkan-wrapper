@@ -97,7 +97,9 @@ auto BufferUtils::ArbitraryGpuDataContainer<BT>::create(
   auto maybe_device_buff_and_mem = DeviceUtil::create_buffer(
       object_refs.logical_ref, object_refs.physical_ref, buffer_size,
       vk::BufferUsageFlagBits::eTransferDst |
-          vk::BufferUsageFlagBits::eShaderDeviceAddress,
+          vk::BufferUsageFlagBits::eShaderDeviceAddress |
+          vk::BufferUsageFlagBits::eStorageBuffer |
+          vk::BufferUsageFlagBits::eStorageBuffer,
       vk::MemoryPropertyFlagBits::eDeviceLocal);
 
   if (!maybe_device_buff_and_mem)
