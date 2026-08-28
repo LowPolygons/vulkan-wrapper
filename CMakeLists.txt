@@ -27,6 +27,7 @@ add_library(vulkan_wrapper
     vulkan_wrapper/syncs/sync_object_container.cc
     vulkan_wrapper/pipeline/compute_pipeline_container.cc
     vulkan_wrapper/debugger/debugger_container.cc
+    vulkan_wrapper/implementation_helpers/implementation_helpers.cc
     vulkan_wrapper/wrapper_boilerplate.cc
 )
 
