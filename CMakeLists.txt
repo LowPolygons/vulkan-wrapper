@@ -82,6 +82,8 @@ add_executable(vulkan_app
     src/apps/conways/conways_app.cc
     src/apps/slime_simulation/slime.cc
     src/apps/shader_hashing/shader_hash.cc
+    src/apps/obj_loader/obj_loader.cc
+    src/apps/obj_loader/tiny_obj.cc
     src/main.cpp
 )
 
