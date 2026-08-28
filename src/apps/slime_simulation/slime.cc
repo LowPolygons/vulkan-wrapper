@@ -1,8 +1,7 @@
 #include "src/apps/slime_simulation/slime.hh"
 #include "vulkan_wrapper/buffers/arbitrary_gpu_data_buffer.hh"
-#include "vulkan_wrapper/buffers/transition_buffer_layout.hh"
+#include "vulkan_wrapper/implementation_helpers/implementation_helpers.hh"
 #include <cmath>
-#include <print>
 #include <random>
 
 auto SlimeApp::is_running() -> bool { return true; }
@@ -10,11 +9,10 @@ auto SlimeApp::is_running() -> bool { return true; }
 auto SlimeApp::create(SlimeCreateInfo info, VulkanRoot &root)
     -> std::expected<SlimeApp, std::string> {
 
-  auto vertices = std::vector<Vertex>{{{-1.0, -1.0}, {0.0, 0.0, 0.0}},
-                                      {{1.0, -1.0}, {1.0, 0.0, 0.0}},
-                                      {{1.0, 1.0}, {0.0, 1.0, 0.0}},
-                                      {{-1.0, 1.0}, {0.0, 0.0, 1.0}}};
-  auto indices = std::vector<std::uint16_t>{{0, 1, 2, 2, 3, 0}};
+  auto vertices = std::vector<ImplementationHelp::FragApp::Vertex>{
+      ImplementationHelp::FragApp::get_frag_app_vertices()};
+  auto indices = std::vector<uint16_t>{
+      ImplementationHelp::FragApp::get_frag_app_indices()};
 
   auto maybe_pipeline_container = GraphicsPipeline::PipelineContainer::create(
       info.pipeline_details, root.device_and_queue.logical(),
@@ -62,17 +60,20 @@ auto SlimeApp::create(SlimeCreateInfo info, VulkanRoot &root)
   auto extracted_command_buffers = std::move(maybe_command_buffer.value());
 
   auto maybe_data_buffers =
-      BufferUtils::DataBufferContainer<Vertex, uint16_t>::create(
-          BufferUtils::BufferContainerCreateInfo<Vertex, unsigned short>{
-              .num_vertices = vertices.size(),
-              .num_indices = indices.size(),
-              .vertex_data = vertices,
-              .index_data = indices},
-          BufferUtils::DeviceBundleRefs{
-              .physical_ref = root.device_and_queue.physical(),
-              .logical_ref = root.device_and_queue.logical(),
-              .queue_ref = root.device_and_queue.queue(),
-              .command_pool = extracted_command_buffers.command_pool()});
+      BufferUtils::DataBufferContainer<ImplementationHelp::FragApp::Vertex,
+                                       uint16_t>::
+          create(
+              BufferUtils::BufferContainerCreateInfo<
+                  ImplementationHelp::FragApp::Vertex, unsigned short>{
+                  .num_vertices = vertices.size(),
+                  .num_indices = indices.size(),
+                  .vertex_data = vertices,
+                  .index_data = indices},
+              BufferUtils::DeviceBundleRefs{
+                  .physical_ref = root.device_and_queue.physical(),
+                  .logical_ref = root.device_and_queue.logical(),
+                  .queue_ref = root.device_and_queue.queue(),
+                  .command_pool = extracted_command_buffers.command_pool()});
 
   if (!maybe_data_buffers)
     return std::unexpected("SlimeApp Data Buffers Init Error : " +
@@ -291,140 +292,91 @@ auto SlimeApp::record_command_buffer(SlimePushConstant push_constants,
   command_buffer.reset();
   command_buffer.begin({});
 
+  command_buffer.setViewport(0, viewport);
+  command_buffer.setScissor(0, scissor);
+
   // Forces an integer ceil (assuming the numthredas in shader is 64,1,1)
   auto mesh_num_workgroups =
       (push_constants.sim_width * push_constants.sim_height + 63) / 64;
   auto slimes_num_workgroups = (push_constants.num_slimes + 63) / 64;
 
-  command_buffer.bindPipeline(vk::PipelineBindPoint::eCompute,
-                              compute_pipeline_data_mesh.pipeline());
-  command_buffer.pushConstants(compute_pipeline_data_mesh.layout(),
-                               vk::ShaderStageFlagBits::eCompute, 0,
-                               sizeof(SlimePushConstant), &push_constants);
-  command_buffer.dispatch(mesh_num_workgroups, 1, 1);
+  ImplementationHelp::CommandBuffer::record_compute_stage<SlimePushConstant>(
+      command_buffer, compute_pipeline_data_mesh.pipeline(),
+      compute_pipeline_data_mesh.layout(),
+      ImplementationHelp::CommandBuffer::ComputeStage<SlimePushConstant>{
+          .workgroups = {static_cast<int>(mesh_num_workgroups), 1, 1},
+          .maybe_proceeding_barrier =
+              vk::MemoryBarrier2{
+                  .srcStageMask = vk::PipelineStageFlagBits2::eComputeShader,
+                  .srcAccessMask = vk::AccessFlagBits2::eShaderStorageWrite,
+                  .dstStageMask = vk::PipelineStageFlagBits2::eComputeShader,
+                  .dstAccessMask = vk::AccessFlagBits2::eShaderStorageRead |
+                                   vk::AccessFlagBits2::eShaderStorageWrite}},
+      push_constants);
 
-  auto compute_pipeline_barrier_info = vk::MemoryBarrier2{
-      .srcStageMask = vk::PipelineStageFlagBits2::eComputeShader,
-      .srcAccessMask = vk::AccessFlagBits2::eShaderStorageWrite,
-      .dstStageMask = vk::PipelineStageFlagBits2::eComputeShader,
-      .dstAccessMask = vk::AccessFlagBits2::eShaderStorageRead |
-                       vk::AccessFlagBits2::eShaderStorageWrite};
+  ImplementationHelp::CommandBuffer::record_compute_stage<SlimePushConstant>(
+      command_buffer, compute_pipeline_data_slime.pipeline(),
+      compute_pipeline_data_slime.layout(),
+      ImplementationHelp::CommandBuffer::ComputeStage<SlimePushConstant>{
+          .workgroups = {static_cast<int>(slimes_num_workgroups), 1, 1},
+          .maybe_proceeding_barrier =
+              vk::MemoryBarrier2{
+                  .srcStageMask = vk::PipelineStageFlagBits2::eComputeShader,
+                  .srcAccessMask = vk::AccessFlagBits2::eShaderStorageRead |
+                                   vk::AccessFlagBits2::eShaderStorageWrite,
+                  .dstStageMask = vk::PipelineStageFlagBits2::eAllGraphics,
+                  .dstAccessMask = vk::AccessFlagBits2::eShaderStorageRead}},
+      push_constants);
 
-  command_buffer.pipelineBarrier2(vk::DependencyInfo{
-      .memoryBarrierCount = 1,
-      .pMemoryBarriers = &compute_pipeline_barrier_info,
-  });
-
-  command_buffer.bindPipeline(vk::PipelineBindPoint::eCompute,
-                              compute_pipeline_data_slime.pipeline());
-  command_buffer.pushConstants(compute_pipeline_data_slime.layout(),
-                               vk::ShaderStageFlagBits::eCompute, 0,
-                               sizeof(SlimePushConstant), &push_constants);
-  command_buffer.dispatch(slimes_num_workgroups, 1, 1);
-
-  // Basically saying that the graphics stage of the pipeline needs to read
-  // memory that a compute shader wrote so it needs synchronising
-  auto pipeline_barrier_info = vk::MemoryBarrier2{
-      .srcStageMask = vk::PipelineStageFlagBits2::eComputeShader,
-      .srcAccessMask = vk::AccessFlagBits2::eShaderStorageRead |
-                       vk::AccessFlagBits2::eShaderStorageWrite,
-      .dstStageMask = vk::PipelineStageFlagBits2::eAllGraphics,
-      .dstAccessMask = vk::AccessFlagBits2::eShaderStorageRead};
-
-  command_buffer.pipelineBarrier2(vk::DependencyInfo{
-      .memoryBarrierCount = 1,
-      .pMemoryBarriers = &pipeline_barrier_info,
-  });
-
-  BufferUtils::transition_image_layout_on_buffer(
-      command_buffer, transition_image, vk::ImageLayout::eUndefined,
-      vk::ImageLayout::eColorAttachmentOptimal, {},
-      vk::AccessFlagBits2::eColorAttachmentWrite,
-      vk::PipelineStageFlagBits2::eColorAttachmentOutput,
-      vk::PipelineStageFlagBits2::eColorAttachmentOutput);
-
-  auto attachment_info = vk::RenderingAttachmentInfo{
-      .imageView = image_view,
-      .imageLayout = vk::ImageLayout::eColorAttachmentOptimal,
-      .loadOp = vk::AttachmentLoadOp::eClear,
-      .storeOp = vk::AttachmentStoreOp::eStore,
-      .clearValue = default_colour,
-  };
-
-  auto rendering_info =
-      vk::RenderingInfo{.renderArea = render_area,
-                        .layerCount = 1,
-                        .colorAttachmentCount = 1,
-                        .pColorAttachments = &attachment_info};
-
-  command_buffer.beginRendering(rendering_info);
-  command_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics,
-                              graphics_pipeline_data.pipeline());
-  command_buffer.pushConstants(graphics_pipeline_data.layout(),
-                               vk::ShaderStageFlagBits::eFragment, 0,
-                               sizeof(SlimePushConstant), &push_constants);
-
-  command_buffer.setViewport(0, viewport);
-  command_buffer.setScissor(0, scissor);
-
-  command_buffer.bindVertexBuffers(0, *data_buffers.vertices().buffer, {0});
-  command_buffer.bindIndexBuffer(data_buffers.indices().buffer, 0,
-                                 vk::IndexType::eUint16);
-
-  command_buffer.drawIndexed(static_cast<uint32_t>(data_buffers.indices().size),
-                             1, 0, 0, 0);
-  BufferUtils::transition_image_layout_on_buffer(
-      command_buffer, transition_image,
-      vk::ImageLayout::eColorAttachmentOptimal, vk::ImageLayout::ePresentSrcKHR,
-      vk::AccessFlagBits2::eColorAttachmentWrite, {},
-      vk::PipelineStageFlagBits2::eColorAttachmentOutput,
-      vk::PipelineStageFlagBits2::eBottomOfPipe);
+  ImplementationHelp::CommandBuffer::record_graphics_stage<SlimePushConstant>(
+      command_buffer, graphics_pipeline_data.pipeline(),
+      graphics_pipeline_data.layout(),
+      ImplementationHelp::CommandBuffer::GraphicsStage<SlimePushConstant>{
+          .transition_image = transition_image,
+          .image_view = image_view,
+          .render_area = render_area,
+          .vertices_buffer_ref = data_buffers.vertices().buffer,
+          .indices_buffer_ref = data_buffers.indices().buffer,
+          .num_indices = static_cast<uint32_t>(data_buffers.indices().size),
+          .indices_type =
+              ImplementationHelp::CommandBuffer::IndicesType::INT_16,
+          .default_colour = default_colour},
+      push_constants);
 
   command_buffer.end();
 }
 
 auto create_slime_app(VulkanRoot &root)
     -> std::expected<SlimeApp, std::string> {
+
+  constexpr uint16_t width = 2560;
+  constexpr uint16_t height = 1440;
+  constexpr auto shader_path = "shaders/slime.spv";
+
   auto app_colour_blend_data = vk::PipelineColorBlendAttachmentState{
       .blendEnable = vk::False,
       .colorWriteMask =
           vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG |
           vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA};
 
-  uint16_t width = 2560;
-  uint16_t height = 1440;
+  auto graphics_pipeline = GraphicsPipeline::PipelineContainerCreateInfo{
+      ImplementationHelp::Graphics::get_partial_graphics_pipeline_details<
+          ImplementationHelp::FragApp::Vertex>(shader_path, shader_path,
+                                               "vertMain", "fragMain", 1920,
+                                               1080, app_colour_blend_data)};
+
+  graphics_pipeline.push_constant_ranges = std::vector{
+      vk::PushConstantRange{.stageFlags = vk::ShaderStageFlagBits::eFragment,
+                            .offset = 0,
+                            .size = sizeof(SlimePushConstant)}};
 
   auto app_create_info = SlimeCreateInfo{
-      .pipeline_details =
-          GraphicsPipeline::PipelineContainerCreateInfo{
-              .vertex_shader_path = "shaders/slime.spv",
-              .frag_shader_path = "shaders/slime.spv",
-              .vertex_main_func_name = "vertMain",
-              .frag_main_func_name = "fragMain",
-              .binding_description = Vertex::get_binding_descriptions(),
-              .attribute_descriptions = Vertex::get_attribute_descriptions(),
-              .screen_region = {0, 0, 800, 600, 0, 1},
-              // WARN: This causes device lost errors
-              .image_slice = {vk::Offset2D(0, 0), {800, 600}},
-              .polygon_mode = vk::PolygonMode::eFill,
-              .cull_mode = vk::CullModeFlagBits::eBack,
-              .front_face = vk::FrontFace::eClockwise,
-              .colour_blend_data =
-                  vk::PipelineColorBlendStateCreateInfo{
-                      .logicOpEnable = vk::False,
-                      .logicOp = vk::LogicOp::eClear,
-                      .attachmentCount = 1,
-                      .pAttachments = &app_colour_blend_data},
-              .push_constant_ranges = std::vector{vk::PushConstantRange{
-                  .stageFlags = vk::ShaderStageFlagBits::eFragment,
-                  .offset = 0,
-                  .size = sizeof(SlimePushConstant)}},
-          },
+      .pipeline_details = graphics_pipeline,
       .default_colour = vk::ClearColorValue(0.2, 0.2, 0.2, 1.0f),
       .max_frames_in_flight = 2,
       .compute_details_texture =
           ComputePipeline::ComputePipelineCreateInfo{
-              .compute_shader_path = "shaders/slime.spv",
+              .compute_shader_path = shader_path,
               .compute_main_func = "compTextureMain",
               .push_constant_ranges = {vk::PushConstantRange{
                   .stageFlags = vk::ShaderStageFlagBits::eCompute,
@@ -432,7 +384,7 @@ auto create_slime_app(VulkanRoot &root)
                   .size = sizeof(SlimePushConstant)}}},
       .compute_details_slime =
           ComputePipeline::ComputePipelineCreateInfo{
-              .compute_shader_path = "shaders/slime.spv",
+              .compute_shader_path = shader_path,
               .compute_main_func = "compSlimeMain",
               .push_constant_ranges = {vk::PushConstantRange{
                   .stageFlags = vk::ShaderStageFlagBits::eCompute,
@@ -440,7 +392,7 @@ auto create_slime_app(VulkanRoot &root)
                   .size = sizeof(SlimePushConstant)}}},
       .sim_width = width,
       .sim_height = height,
-      .num_slimes = 4000000,
+      .num_slimes = 200000,
   };
 
   auto maybe_app = SlimeApp::create(app_create_info, root);

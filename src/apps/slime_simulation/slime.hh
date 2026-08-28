@@ -5,6 +5,7 @@
 #include "vulkan_wrapper/buffers/arbitrary_gpu_data_buffer.hh"
 #include "vulkan_wrapper/buffers/command_buffer_container.hh"
 #include "vulkan_wrapper/buffers/data_buffer_container.hh"
+#include "vulkan_wrapper/implementation_helpers/implementation_helpers.hh"
 #include "vulkan_wrapper/pipeline/compute_pipeline_container.hh"
 #include "vulkan_wrapper/pipeline/graphics_pipeline_container.hh"
 #include "vulkan_wrapper/syncs/sync_object_container.hh"
@@ -136,7 +137,8 @@ public:
            ComputePipeline::ComputePipelineContainer &&c_p_d_a,
            ComputePipeline::ComputePipelineContainer &&c_p_d_b,
            BufferUtils::CommandPoolAndBuffersContainer &&c_p_a_b,
-           BufferUtils::DataBufferContainer<Vertex, uint16_t> &&d_b,
+           BufferUtils::DataBufferContainer<ImplementationHelp::FragApp::Vertex,
+                                            uint16_t> &&d_b,
            SyncObjects::SyncObjectsContainer &&s_o,
            BufferUtils::ArbitraryGpuDataContainer<TextureColour> s_b_a,
            BufferUtils::ArbitraryGpuDataContainer<TextureColour> s_b_b,
@@ -159,7 +161,9 @@ private:
   ComputePipeline::ComputePipelineContainer compute_pipeline_data_mesh;
   ComputePipeline::ComputePipelineContainer compute_pipeline_data_slime;
   BufferUtils::CommandPoolAndBuffersContainer command_pool_and_buffers;
-  BufferUtils::DataBufferContainer<Vertex, uint16_t> data_buffers;
+  BufferUtils::DataBufferContainer<ImplementationHelp::FragApp::Vertex,
+                                   uint16_t>
+      data_buffers;
   SyncObjects::SyncObjectsContainer sync_objects;
 
   // Pipeline metadata

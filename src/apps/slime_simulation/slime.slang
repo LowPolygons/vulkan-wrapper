@@ -1,7 +1,6 @@
 struct VertexInput
 {
     float2 position;
-    float3 colour;
 };
 
 struct VertexOutput
@@ -97,7 +96,7 @@ VertexOutput vertMain(VertexInput input)
 {
     VertexOutput output;
     output.sv_position = float4(input.position, 0.0, 1.0);
-    output.color = input.colour;
+    output.color = float3(0.0,0.0,0.0);
     return output;
 }
 
@@ -212,7 +211,7 @@ void compSlimeMain(uint3 thread_id: SV_DispatchThreadID)
     Slime slime = properties.slime_address[target_index];
     uint random = hash_function(uint(slime.position.y * properties.sim_width) + uint(slime.position.x) + hash_function(target_index));
 
-    const float move_speed = 1;
+    const float move_speed = 4;
     const float sensor_distance = 4.0;
     const float sensor_angle = 3.14159265 / 6.0;
 
