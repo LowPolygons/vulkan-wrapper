@@ -4,8 +4,9 @@
 #include <vulkan/vulkan_raii.hpp>
 
 auto BufferUtils::FactoryHelper::allocate_memory_on_host_and_device(
-    vk::raii::Device &device, vk::raii::PhysicalDevice &physical_device,
-    vk::DeviceSize buffer_size) -> MaybeHostAndDeviceMem {
+    const vk::raii::Device &device,
+    const vk::raii::PhysicalDevice &physical_device, vk::DeviceSize buffer_size)
+    -> MaybeHostAndDeviceMem {
 #define HOST_BUFFER_USAGE_FLAGS vk::BufferUsageFlagBits::eTransferSrc
 #define HOST_MEMORY_PROPERTY_FLAGS                                             \
   vk::MemoryPropertyFlagBits::eHostVisible |                                   \

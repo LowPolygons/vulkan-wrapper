@@ -11,9 +11,9 @@ struct BufferCopyData {
   std::size_t dest_offset_UNUSED;
 };
 
-auto copy_host_buffer_to_gpu_buffer(vk::raii::Device &device,
-                                    vk::raii::Queue &queue,
-                                    vk::raii::CommandPool &command_pool,
+auto copy_host_buffer_to_gpu_buffer(const vk::raii::Device &device,
+                                    const vk::raii::Queue &queue,
+                                    const vk::raii::CommandPool &command_pool,
                                     vk::raii::Buffer &source_buffer,
                                     vk::raii::Buffer &dest_buffer,
                                     BufferCopyData buff_data) -> void;

@@ -67,8 +67,9 @@ private:
 namespace FactoryHelper {
 
 auto allocate_memory_on_host_and_device(
-    vk::raii::Device &device, vk::raii::PhysicalDevice &physical_device,
-    vk::DeviceSize buffer_size) -> MaybeHostAndDeviceMem;
+    const vk::raii::Device &device,
+    const vk::raii::PhysicalDevice &physical_device, vk::DeviceSize buffer_size)
+    -> MaybeHostAndDeviceMem;
 
 // staging_mem.mapMemory(DeviceSize offset, DeviceSize size)
 template <typename T>
@@ -98,7 +99,7 @@ template <typename VBT, typename IT> // Vertex Buffer Type, Index Type
   requires std::is_arithmetic_v<IT>
 auto BufferUtils::DataBufferContainer<VBT, IT>::create(
     BufferUtils::BufferContainerCreateInfo<VBT, IT> info,
-    BufferUtils::DeviceBundleRefs devices)
+    const BufferUtils::DeviceBundleRefs devices)
     -> std::expected<BufferUtils::DataBufferContainer<VBT, IT>, std::string> {
   auto vertex_buffer_size = sizeof(VBT) * info.num_vertices;
   auto index_buffer_size = sizeof(IT) * info.num_indices;

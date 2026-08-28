@@ -1,7 +1,11 @@
 
-// #include "apps/conways/conways_app.hh"
-// #include "apps/shader_hashing/shader_hash.hh"
 #include "apps/slime_simulation/slime.hh"
+#include "src/apps/3d_plane_spin/3d_app.hh"
+#include "src/apps/conways/conways_app.hh"
+#include "src/apps/mandelbulb/mandelbulb_app.hh"
+#include "src/apps/obj_loader/obj_loader.hh"
+#include "src/apps/shader_hashing/shader_hash.hh"
+
 #include "vulkan_wrapper/wrapper_boilerplate.hh"
 #include <GLFW/glfw3.h>
 #include <cstdlib>
@@ -36,9 +40,10 @@ auto main() -> int {
 
   // auto maybe_app = create_shader_hash_app(vulkan_root);
   // auto maybe_app = create_conways_app(vulkan_root);
-  auto maybe_app = create_slime_app(vulkan_root);
+  // auto maybe_app = create_slime_app(vulkan_root);
   // auto maybe_app = create_mandelbulb_app(vulkan_root);
   // auto maybe_app = create_3d_app(vulkan_root);
+  auto maybe_app = create_obj_loader_app(vulkan_root);
 
   if (!maybe_app) {
     std::cerr << maybe_app.error() << std::endl;

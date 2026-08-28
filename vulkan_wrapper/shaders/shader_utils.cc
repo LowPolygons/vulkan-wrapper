@@ -19,8 +19,8 @@ auto ShaderUtils::read_shader(std::string shader_path)
   return buffer;
 }
 
-auto ShaderUtils::map_shader_bytes_to_shader_module(std::vector<char> bytecode,
-                                                    vk::raii::Device &device)
+auto ShaderUtils::map_shader_bytes_to_shader_module(
+    std::vector<char> bytecode, const vk::raii::Device &device)
     -> vk::raii::ShaderModule {
   auto create_info = vk::ShaderModuleCreateInfo{
       .codeSize = bytecode.size() * sizeof(char),

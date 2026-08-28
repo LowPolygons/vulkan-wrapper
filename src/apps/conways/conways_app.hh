@@ -4,37 +4,13 @@
 #include "vulkan_wrapper/buffers/arbitrary_gpu_data_buffer.hh"
 #include "vulkan_wrapper/buffers/command_buffer_container.hh"
 #include "vulkan_wrapper/buffers/data_buffer_container.hh"
+#include "vulkan_wrapper/implementation_helpers/implementation_helpers.hh"
 #include "vulkan_wrapper/pipeline/compute_pipeline_container.hh"
 #include "vulkan_wrapper/pipeline/graphics_pipeline_container.hh"
 #include "vulkan_wrapper/syncs/sync_object_container.hh"
 #include "vulkan_wrapper/wrapper_boilerplate.hh"
 #include <glm/fwd.hpp>
 #include <glm/glm.hpp>
-
-struct Vertex {
-  glm::vec2 position;
-  glm::vec3 colour;
-  static vk::VertexInputBindingDescription get_binding_descriptions() {
-    return {.binding = 0,
-            .stride = sizeof(Vertex),
-            .inputRate = vk::VertexInputRate::eVertex};
-  }
-  static std::vector<vk::VertexInputAttributeDescription>
-  get_attribute_descriptions() {
-    return {{
-        vk::VertexInputAttributeDescription{.location = 0,
-                                            .binding = 0,
-                                            .format = vk::Format::eR32G32Sfloat,
-                                            .offset =
-                                                offsetof(Vertex, position)},
-        vk::VertexInputAttributeDescription{.location = 1,
-                                            .binding = 0,
-                                            .format =
-                                                vk::Format::eR32G32B32Sfloat,
-                                            .offset = offsetof(Vertex, colour)},
-    }};
-  }
-};
 
 // Push constants
 struct ConwaysState {
@@ -77,13 +53,13 @@ struct ConwaysGameOfLife : public VulkanAppInterface {
 
 public:
   static auto create(ConwaysCreateInfo info, VulkanRoot &root,
-                     std::vector<Vertex> vertices,
+                     std::vector<ImplementationHelp::FragApp::Vertex> vertices,
                      std::vector<uint16_t> indices)
       -> std::expected<ConwaysGameOfLife, std::string>;
 
   bool is_running() override;
   auto get_current_state(std::shared_ptr<GLFWwindow> window,
-                         vk::raii::Device &logical_device,
+                         const vk::raii::Device &logical_device,
                          SwapchainInfo::SwapchainInfoContainer &swapchain_state)
       -> std::expected<std::optional<VulkanAppTickState>, std::string> override;
 
@@ -97,7 +73,8 @@ public:
       GraphicsPipeline::PipelineContainer &&g_p_a,
       ComputePipeline::ComputePipelineContainer &&c_p_d,
       BufferUtils::CommandPoolAndBuffersContainer &&c_p_a_b,
-      BufferUtils::DataBufferContainer<Vertex, uint16_t> &&d_b,
+      BufferUtils::DataBufferContainer<ImplementationHelp::FragApp::Vertex,
+                                       uint16_t> &&d_b,
       SyncObjects::SyncObjectsContainer &&s_o, uint32_t m_f_i_f,
       vk::ClearColorValue d_c, std::pair<uint16_t, uint16_t> sim_state,
       BufferUtils::ArbitraryGpuDataContainer<glm::uint8> &&c_s_b_a,
@@ -117,7 +94,9 @@ private:
   GraphicsPipeline::PipelineContainer graphics_pipeline_data;
   ComputePipeline::ComputePipelineContainer compute_pipeline_data;
   BufferUtils::CommandPoolAndBuffersContainer command_pool_and_buffers;
-  BufferUtils::DataBufferContainer<Vertex, uint16_t> data_buffers;
+  BufferUtils::DataBufferContainer<ImplementationHelp::FragApp::Vertex,
+                                   uint16_t>
+      data_buffers;
   SyncObjects::SyncObjectsContainer sync_objects;
 
   uint32_t max_frames_in_flight;

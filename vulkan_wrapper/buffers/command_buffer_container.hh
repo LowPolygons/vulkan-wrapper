@@ -18,7 +18,7 @@ public:
   auto get_buffer_ref(std::size_t index) -> vk::raii::CommandBuffer &;
 
   static auto create(CommandBufferContainerCreateInfo info,
-                     vk::raii::Device &device, uint32_t queue_index)
+                     const vk::raii::Device &device, uint32_t queue_index)
       -> std::expected<CommandPoolAndBuffersContainer, std::string>;
 
 private:

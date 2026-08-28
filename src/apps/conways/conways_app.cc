@@ -8,9 +8,10 @@
 
 auto ConwaysGameOfLife::is_running() -> bool { return true; }
 
-auto ConwaysGameOfLife::create(ConwaysCreateInfo info, VulkanRoot &root,
-                               std::vector<Vertex> vertices,
-                               std::vector<uint16_t> indices)
+auto ConwaysGameOfLife::create(
+    ConwaysCreateInfo info, VulkanRoot &root,
+    std::vector<ImplementationHelp::FragApp::Vertex> vertices,
+    std::vector<uint16_t> indices)
     -> std::expected<ConwaysGameOfLife, std::string> {
   auto maybe_pipeline_container = GraphicsPipeline::PipelineContainer::create(
       info.pipeline_details, root.device_and_queue.logical(),
@@ -48,17 +49,20 @@ auto ConwaysGameOfLife::create(ConwaysCreateInfo info, VulkanRoot &root,
   auto extracted_command_buffers = std::move(maybe_command_buffer.value());
 
   auto maybe_data_buffers =
-      BufferUtils::DataBufferContainer<Vertex, uint16_t>::create(
-          BufferUtils::BufferContainerCreateInfo<Vertex, unsigned short>{
-              .num_vertices = vertices.size(),
-              .num_indices = indices.size(),
-              .vertex_data = vertices,
-              .index_data = indices},
-          BufferUtils::DeviceBundleRefs{
-              .physical_ref = root.device_and_queue.physical(),
-              .logical_ref = root.device_and_queue.logical(),
-              .queue_ref = root.device_and_queue.queue(),
-              .command_pool = extracted_command_buffers.command_pool()});
+      BufferUtils::DataBufferContainer<ImplementationHelp::FragApp::Vertex,
+                                       uint16_t>::
+          create(
+              BufferUtils::BufferContainerCreateInfo<
+                  ImplementationHelp::FragApp::Vertex, unsigned short>{
+                  .num_vertices = vertices.size(),
+                  .num_indices = indices.size(),
+                  .vertex_data = vertices,
+                  .index_data = indices},
+              BufferUtils::DeviceBundleRefs{
+                  .physical_ref = root.device_and_queue.physical(),
+                  .logical_ref = root.device_and_queue.logical(),
+                  .queue_ref = root.device_and_queue.queue(),
+                  .command_pool = extracted_command_buffers.command_pool()});
 
   if (!maybe_data_buffers)
     return std::unexpected("Conways Game Of Life Data Buffers Init Error : " +
@@ -125,7 +129,7 @@ auto ConwaysGameOfLife::create(ConwaysCreateInfo info, VulkanRoot &root,
 }
 
 auto ConwaysGameOfLife::get_current_state(
-    std::shared_ptr<GLFWwindow> window, vk::raii::Device &logical_device,
+    std::shared_ptr<GLFWwindow> window, const vk::raii::Device &logical_device,
     SwapchainInfo::SwapchainInfoContainer &swapchain_state)
     -> std::expected<std::optional<VulkanAppTickState>, std::string> {
 
@@ -329,8 +333,10 @@ auto create_conways_app(VulkanRoot &root)
               .frag_shader_path = "shaders/conways.spv",
               .vertex_main_func_name = "vertMain",
               .frag_main_func_name = "fragMain",
-              .binding_description = Vertex::get_binding_descriptions(),
-              .attribute_descriptions = Vertex::get_attribute_descriptions(),
+              .binding_description = ImplementationHelp::FragApp::Vertex::
+                  get_binding_descriptions(),
+              .attribute_descriptions = ImplementationHelp::FragApp::Vertex::
+                  get_attribute_descriptions(),
               .screen_region = {0, 0, 800, 600, 0, 1},
               // WARN: This causes device lost errors
               .image_slice = {vk::Offset2D(0, 0), {800, 600}},
@@ -364,12 +370,10 @@ auto create_conways_app(VulkanRoot &root)
 
   std::println("Size of App Push Constant: {} Bytes", sizeof(ConwaysState));
 
-  auto maybe_app = ConwaysGameOfLife::create(app_create_info, root,
-                                             {{{-1.0, -1.0}, {0.0, 0.0, 0.0}},
-                                              {{1.0, -1.0}, {1.0, 0.0, 0.0}},
-                                              {{1.0, 1.0}, {0.0, 1.0, 0.0}},
-                                              {{-1.0, 1.0}, {0.0, 0.0, 1.0}}},
-                                             {0, 1, 2, 2, 3, 0});
+  auto maybe_app = ConwaysGameOfLife::create(
+      app_create_info, root,
+      {{{-1.0, -1.0}}, {{1.0, -1.0}}, {{1.0, 1.0}}, {{-1.0, 1.0}}},
+      {0, 1, 2, 2, 3, 0});
 
   return maybe_app;
 }

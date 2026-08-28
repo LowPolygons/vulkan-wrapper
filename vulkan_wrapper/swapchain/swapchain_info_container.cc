@@ -33,7 +33,7 @@ auto SwapchainInfo::SwapchainInfoContainer::wipe() -> void {
 
 auto SwapchainInfo::SwapchainInfoContainer::create(
     SwapchainInfo::SwapchainInfoContainerCreateInfo info,
-    SwapchainInfoObjectRefs object_refs)
+    const SwapchainInfoObjectRefs object_refs)
     -> std::expected<SwapchainInfoContainer, std::string> {
   // Extract info from physical device such as surface capabilities
   auto surface_capabilities =
@@ -171,7 +171,7 @@ auto SwapchainInfo::FactoryHelper::choose_extent(
 
 auto SwapchainInfo::FactoryHelper::get_image_views(
     std::vector<vk::Image> &images, vk::SurfaceFormatKHR surface_format,
-    vk::raii::Device &device)
+    const vk::raii::Device &device)
     -> std::expected<std::vector<vk::raii::ImageView>, std::string> {
   // if (images.empty())
   //   return std::unexpected("Swap chain images array was empty");

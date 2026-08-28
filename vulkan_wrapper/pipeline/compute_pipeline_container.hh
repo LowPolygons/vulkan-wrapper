@@ -17,7 +17,7 @@ public:
   ComputePipelineContainer() = delete;
 
   static auto create(ComputePipeline::ComputePipelineCreateInfo info,
-                     vk::raii::Device &device)
+                     const vk::raii::Device &device)
       -> std::expected<ComputePipelineContainer, std::string>;
 
   auto layout() -> vk::raii::PipelineLayout &;

@@ -28,7 +28,7 @@ struct VulkanAppInterface {
   // INFO: if it returns nullopt, the swap chain needs recreating
   virtual std::expected<std::optional<VulkanAppTickState>, std::string>
   get_current_state(std::shared_ptr<GLFWwindow> window,
-                    vk::raii::Device &logical_device,
+                    const vk::raii::Device &logical_device,
                     SwapchainInfo::SwapchainInfoContainer &swapchain_state) = 0;
 };
 

@@ -18,8 +18,8 @@ public:
   UniformBufferContainer() = delete;
 
   static auto create(UniformBufferContainerCreateInfo info,
-                     vk::raii::Device &device,
-                     vk::raii::PhysicalDevice &phys_device)
+                     const vk::raii::Device &device,
+                     const vk::raii::PhysicalDevice &phys_device)
       -> std::expected<UniformBufferContainer, std::string>;
 
   auto descriptor_set_layout() -> vk::raii::DescriptorSetLayout &;
@@ -58,7 +58,7 @@ private:
 template <typename UB>
 auto BufferUtils::UniformBufferContainer<UB>::create(
     BufferUtils::UniformBufferContainerCreateInfo info,
-    vk::raii::Device &device, vk::raii::PhysicalDevice &phys_device)
+    const vk::raii::Device &device, const vk::raii::PhysicalDevice &phys_device)
     -> std::expected<UniformBufferContainer, std::string> {
   // Descriptor Set Layout
   auto uniform_buffer_layout_binding = vk::DescriptorSetLayoutBinding{

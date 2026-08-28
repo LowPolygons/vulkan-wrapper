@@ -64,7 +64,7 @@ struct App3D : public VulkanAppInterface {
 
   bool is_running() override;
   auto get_current_state(std::shared_ptr<GLFWwindow> window,
-                         vk::raii::Device &logical_device,
+                         const vk::raii::Device &logical_device,
                          SwapchainInfo::SwapchainInfoContainer &swapchain_state)
       -> std::expected<std::optional<VulkanAppTickState>, std::string> override;
 

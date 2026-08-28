@@ -71,7 +71,7 @@ auto MandelbulbApp::create(MandelbulbAppCreateInfo info, VulkanRoot &root,
 }
 
 auto MandelbulbApp::get_current_state(
-    std::shared_ptr<GLFWwindow> window, vk::raii::Device &logical_device,
+    std::shared_ptr<GLFWwindow> window, const vk::raii::Device &logical_device,
     SwapchainInfo::SwapchainInfoContainer &swapchain_state)
     -> std::expected<std::optional<VulkanAppTickState>, std::string> {
   //=// This shader expects a Push constant of type MandelbulbFragPushConstants
@@ -225,8 +225,8 @@ auto create_mandelbulb_app(VulkanRoot &vulkan_root)
           // -> screen_region and image slice is a wrapper class
           // -> look into push constant ranges vs uniform buffers
       GraphicsPipeline::PipelineContainerCreateInfo{
-          .vertex_shader_path = "shaders/frag_shader.spv",
-          .frag_shader_path = "shaders/frag_shader.spv",
+          .vertex_shader_path = "shaders/mandelbulb.spv",
+          .frag_shader_path = "shaders/mandelbulb.spv",
           .vertex_main_func_name = "vertMain",
           .frag_main_func_name = "fragMain",
           .binding_description = ShaderVertex::get_binding_descriptions(),

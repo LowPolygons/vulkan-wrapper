@@ -27,7 +27,7 @@ public:
   SwapchainInfoContainer() = delete;
 
   static auto create(SwapchainInfoContainerCreateInfo info,
-                     SwapchainInfoObjectRefs object_refs)
+                     const SwapchainInfoObjectRefs object_refs)
       -> std::expected<SwapchainInfoContainer, std::string>;
 
   auto swap_chain() -> vk::raii::SwapchainKHR &;
@@ -66,7 +66,7 @@ auto choose_extent(vk::SurfaceCapabilitiesKHR surface_capabilities,
 
 auto get_image_views(std::vector<vk::Image> &images,
                      vk::SurfaceFormatKHR surface_format,
-                     vk::raii::Device &device)
+                     const vk::raii::Device &device)
     -> std::expected<std::vector<vk::raii::ImageView>, std::string>;
 
 } // namespace FactoryHelper

@@ -1,7 +1,7 @@
 #include "vulkan_wrapper/buffers/command_buffer_container.hh"
 
 auto BufferUtils::CommandPoolAndBuffersContainer::create(
-    CommandBufferContainerCreateInfo info, vk::raii::Device &device,
+    CommandBufferContainerCreateInfo info, const vk::raii::Device &device,
     uint32_t queue_index)
     -> std::expected<CommandPoolAndBuffersContainer, std::string> {
   if (device == nullptr)

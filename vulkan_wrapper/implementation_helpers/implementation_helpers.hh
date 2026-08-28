@@ -93,16 +93,16 @@ template <typename PC_OR_VOID> struct GraphicsStage {
 
 template <typename PC_OR_VOID>
 static auto record_compute_stage(vk::raii::CommandBuffer &command_buffer,
-                                 vk::raii::Pipeline &pipeline,
-                                 vk::raii::PipelineLayout &layout_ref,
+                                 const vk::raii::Pipeline &pipeline,
+                                 const vk::raii::PipelineLayout &layout_ref,
                                  ComputeStage<PC_OR_VOID> stage_info,
                                  std::optional<PC_OR_VOID> maybe_push_constant)
     -> void;
 
 template <typename PC_OR_VOID>
 static auto record_graphics_stage(vk::raii::CommandBuffer &command_buffer,
-                                  vk::raii::Pipeline &pipeline,
-                                  vk::raii::PipelineLayout &layout_ref,
+                                  const vk::raii::Pipeline &pipeline,
+                                  const vk::raii::PipelineLayout &layout_ref,
                                   GraphicsStage<PC_OR_VOID> stage_info,
                                   std::optional<PC_OR_VOID> maybe_push_constant)
     -> void;
@@ -111,8 +111,9 @@ static auto record_graphics_stage(vk::raii::CommandBuffer &command_buffer,
 
 template <typename PC_OR_VOID>
 auto ImplementationHelp::CommandBuffer::record_compute_stage(
-    vk::raii::CommandBuffer &command_buffer, vk::raii::Pipeline &pipeline,
-    vk::raii::PipelineLayout &layout_ref, ComputeStage<PC_OR_VOID> stage_info,
+    vk::raii::CommandBuffer &command_buffer, const vk::raii::Pipeline &pipeline,
+    const vk::raii::PipelineLayout &layout_ref,
+    ComputeStage<PC_OR_VOID> stage_info,
     std::optional<PC_OR_VOID> maybe_push_constant) -> void {
 
   command_buffer.bindPipeline(vk::PipelineBindPoint::eCompute, pipeline);
@@ -134,8 +135,9 @@ auto ImplementationHelp::CommandBuffer::record_compute_stage(
 
 template <typename PC_OR_VOID>
 auto ImplementationHelp::CommandBuffer::record_graphics_stage(
-    vk::raii::CommandBuffer &command_buffer, vk::raii::Pipeline &pipeline,
-    vk::raii::PipelineLayout &layout_ref, GraphicsStage<PC_OR_VOID> stage_info,
+    vk::raii::CommandBuffer &command_buffer, const vk::raii::Pipeline &pipeline,
+    const vk::raii::PipelineLayout &layout_ref,
+    GraphicsStage<PC_OR_VOID> stage_info,
     std::optional<PC_OR_VOID> maybe_push_constant) -> void {
 
   BufferUtils::transition_image_layout_on_buffer(

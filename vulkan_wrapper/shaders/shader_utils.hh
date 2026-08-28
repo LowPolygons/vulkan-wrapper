@@ -10,7 +10,7 @@ auto read_shader(std::string shader_path)
     -> std::expected<std::vector<char>, std::string>;
 
 auto map_shader_bytes_to_shader_module(std::vector<char> bytecode,
-                                       vk::raii::Device &device)
+                                       const vk::raii::Device &device)
     -> vk::raii::ShaderModule;
 } // namespace ShaderUtils
 

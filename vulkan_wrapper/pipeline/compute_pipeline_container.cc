@@ -12,7 +12,8 @@ auto ComputePipeline::ComputePipelineContainer::pipeline()
 }
 
 auto ComputePipeline::ComputePipelineContainer::create(
-    ComputePipeline::ComputePipelineCreateInfo info, vk::raii::Device &device)
+    ComputePipeline::ComputePipelineCreateInfo info,
+    const vk::raii::Device &device)
     -> std::expected<ComputePipeline::ComputePipelineContainer, std::string> {
   if (device == nullptr)
     return std::unexpected(

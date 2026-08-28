@@ -191,7 +191,7 @@ auto SlimeApp::create(SlimeCreateInfo info, VulkanRoot &root)
 }
 
 auto SlimeApp::get_current_state(
-    std::shared_ptr<GLFWwindow> window, vk::raii::Device &logical_device,
+    std::shared_ptr<GLFWwindow> window, const vk::raii::Device &logical_device,
     SwapchainInfo::SwapchainInfoContainer &swapchain_state)
     -> std::expected<std::optional<VulkanAppTickState>, std::string> {
   // Ensures that the viewport updates as the screen changes size

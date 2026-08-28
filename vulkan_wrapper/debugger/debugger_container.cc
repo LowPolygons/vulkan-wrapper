@@ -13,7 +13,7 @@ callback_function(vk::DebugUtilsMessageSeverityFlagBitsEXT severity,
   return vk::False;
 }
 
-auto Debugging::Debugger::create(vk::raii::Instance &instance)
+auto Debugging::Debugger::create(const vk::raii::Instance &instance)
     -> std::expected<Debugger, std::string> {
 #define MessageSeverity vk::DebugUtilsMessageSeverityFlagBitsEXT
 #define MessageType vk::DebugUtilsMessageTypeFlagBitsEXT

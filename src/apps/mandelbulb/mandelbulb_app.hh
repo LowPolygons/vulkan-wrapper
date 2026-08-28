@@ -74,7 +74,7 @@ struct MandelbulbApp : public VulkanAppInterface {
         max_frames_in_flight(m_f_i_f), default_colour(d_c) {};
 
   auto get_current_state(std::shared_ptr<GLFWwindow> window,
-                         vk::raii::Device &logical_device,
+                         const vk::raii::Device &logical_device,
                          SwapchainInfo::SwapchainInfoContainer &swapchain_state)
       -> std::expected<std::optional<VulkanAppTickState>, std::string> override;
 

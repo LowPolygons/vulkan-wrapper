@@ -15,7 +15,8 @@ public:
 
   static auto create(std::size_t present_complete_semaphore_size,
                      std::size_t render_finished_semaphore_size,
-                     std::size_t draw_fence_size, vk::raii::Device &device)
+                     std::size_t draw_fence_size,
+                     const vk::raii::Device &device)
       -> std::expected<SyncObjectsContainer, std::string>;
 
 private:

@@ -28,7 +28,7 @@ auto GraphicsPipeline::PipelineContainer::update_dynamic_objects(
 }
 
 auto GraphicsPipeline::PipelineContainer::create(
-    PipelineContainerCreateInfo info, vk::raii::Device &device,
+    PipelineContainerCreateInfo info, const vk::raii::Device &device,
     vk::SurfaceFormatKHR &surface_format,
     vk::raii::DescriptorSetLayout *descriptor_set_layout)
     -> std::expected<PipelineContainer, std::string> {

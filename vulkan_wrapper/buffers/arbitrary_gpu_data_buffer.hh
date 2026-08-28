@@ -23,13 +23,14 @@ template <typename BT> class ArbitraryGpuDataContainer {
 public:
   ArbitraryGpuDataContainer<BT>() = delete;
 
-  static auto create(NeededObjects object_refs, std::vector<BT> initial_data)
+  static auto create(const NeededObjects object_refs,
+                     std::vector<BT> initial_data)
       -> std::expected<ArbitraryGpuDataContainer, std::string>;
 
   auto buffer() -> vk::raii::Buffer &;
   auto memory() -> vk::raii::DeviceMemory &;
   auto buffer_size() -> std::size_t;
-  auto address(vk::raii::Device &device) -> vk::DeviceAddress;
+  auto address(const vk::raii::Device &device) -> vk::DeviceAddress;
 
 private:
   ArbitraryGpuDataContainer<BT>(vk::raii::Buffer &&buffer,
@@ -57,7 +58,7 @@ auto BufferUtils::ArbitraryGpuDataContainer<BT>::buffer()
 }
 template <typename BT>
 auto BufferUtils::ArbitraryGpuDataContainer<BT>::address(
-    vk::raii::Device &device) -> vk::DeviceAddress {
+    const vk::raii::Device &device) -> vk::DeviceAddress {
   auto info = vk::BufferDeviceAddressInfo{};
   info.buffer = _buffer;
 
@@ -71,7 +72,7 @@ auto BufferUtils::ArbitraryGpuDataContainer<BT>::buffer_size() -> std::size_t {
 
 template <typename BT>
 auto BufferUtils::ArbitraryGpuDataContainer<BT>::create(
-    NeededObjects object_refs, std::vector<BT> initial_data)
+    const NeededObjects object_refs, std::vector<BT> initial_data)
     -> std::expected<ArbitraryGpuDataContainer, std::string> {
   auto buffer_size = initial_data.size() * sizeof(BT);
 

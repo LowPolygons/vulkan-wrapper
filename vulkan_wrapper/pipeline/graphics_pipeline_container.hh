@@ -44,7 +44,8 @@ public:
 
   auto update_dynamic_objects(vk::Extent2D &swapchain_size) -> void;
 
-  static auto create(PipelineContainerCreateInfo info, vk::raii::Device &device,
+  static auto create(PipelineContainerCreateInfo info,
+                     const vk::raii::Device &device,
                      vk::SurfaceFormatKHR &surface_format,
                      vk::raii::DescriptorSetLayout *descriptor_set_layout)
       -> std::expected<PipelineContainer, std::string>;

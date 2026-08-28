@@ -10,7 +10,7 @@ class Debugger {
 public:
   Debugger() = delete;
 
-  static auto create(vk::raii::Instance &instance)
+  static auto create(const vk::raii::Instance &instance)
       -> std::expected<Debugger, std::string>;
 
   auto messenger() -> vk::raii::DebugUtilsMessengerEXT &;
