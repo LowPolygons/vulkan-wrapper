@@ -13,7 +13,7 @@ auto main() -> int {
   auto vulkan_app_data = VulkanRootCreateinfo{
       .width = 1920,
       .height = 1080,
-      .window_resizable = false,
+      .window_resizable = true,
       .window_name = "Vulkan App",
       .application_info =
           vk::ApplicationInfo{.applicationVersion = VK_MAKE_VERSION(1, 0, 0),

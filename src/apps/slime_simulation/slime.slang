@@ -212,7 +212,7 @@ void compSlimeMain(uint3 thread_id: SV_DispatchThreadID)
     Slime slime = properties.slime_address[target_index];
     uint random = hash_function(uint(slime.position.y * properties.sim_width) + uint(slime.position.x) + hash_function(target_index));
 
-    const float move_speed = 2;
+    const float move_speed = 1;
     const float sensor_distance = 4.0;
     const float sensor_angle = 3.14159265 / 6.0;
 

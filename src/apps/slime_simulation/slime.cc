@@ -103,7 +103,10 @@ auto SlimeApp::create(SlimeCreateInfo info, VulkanRoot &root)
   auto angle_distribution = std::uniform_real_distribution<float>(
       0.0f, 2.0f * std::numbers::pi_v<float>);
 
-  auto radius_distribution = std::uniform_real_distribution<float>(0.0f, 1.0f);
+  auto hoz_distribution =
+      std::uniform_real_distribution<float>(0.0f, info.sim_width);
+  auto vert_distribution =
+      std::uniform_real_distribution<float>(0.0f, info.sim_height);
 
   const glm::vec2 center{
       static_cast<float>(info.sim_width) / 2.0f,
@@ -117,15 +120,13 @@ auto SlimeApp::create(SlimeCreateInfo info, VulkanRoot &root)
 
     slime.family_index = 0;
 
-    const float theta = angle_distribution(rand_gen);
-    const float r = radius * std::sqrt(radius_distribution(rand_gen));
-
-    slime.position =
-        center + glm::vec2{r * std::cos(theta), r * std::sin(theta)};
+    slime.position = center;
+    // glm::vec2{hoz_distribution(rand_gen), vert_distribution(rand_gen)};
 
     const glm::vec2 to_center = center - slime.position;
 
-    slime.angle = std::atan2(to_center.y, to_center.x);
+    slime.angle =
+        angle_distribution(rand_gen); // std::atan2(to_center.y, to_center.x);
 
     initial_slimes_state.push_back(slime);
   }
@@ -390,8 +391,8 @@ auto create_slime_app(VulkanRoot &root)
           vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG |
           vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA};
 
-  uint16_t width = 1920;
-  uint16_t height = 1080;
+  uint16_t width = 2560;
+  uint16_t height = 1440;
 
   auto app_create_info = SlimeCreateInfo{
       .pipeline_details =
@@ -439,7 +440,7 @@ auto create_slime_app(VulkanRoot &root)
                   .size = sizeof(SlimePushConstant)}}},
       .sim_width = width,
       .sim_height = height,
-      .num_slimes = 2000000,
+      .num_slimes = 4000000,
   };
 
   auto maybe_app = SlimeApp::create(app_create_info, root);
