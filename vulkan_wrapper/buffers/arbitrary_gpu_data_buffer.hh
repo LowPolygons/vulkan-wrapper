@@ -31,6 +31,9 @@ public:
   auto memory() -> vk::raii::DeviceMemory &;
   auto buffer_size() -> std::size_t;
   auto address(const vk::raii::Device &device) -> vk::DeviceAddress;
+  auto override_gpu_data(const NeededObjects object_refs,
+                         std::vector<BT> new_data)
+      -> std::expected<void, std::string>;
 
 private:
   ArbitraryGpuDataContainer<BT>(vk::raii::Buffer &&buffer,
@@ -123,5 +126,39 @@ auto BufferUtils::ArbitraryGpuDataContainer<BT>::create(
       "on the device",
       buffer_size);
   return object;
+}
+
+template <typename BT>
+auto BufferUtils::ArbitraryGpuDataContainer<BT>::override_gpu_data(
+    const NeededObjects object_refs, std::vector<BT> new_data)
+    -> std::expected<void, std::string> {
+  auto buffer_size = sizeof(BT) * new_data.size();
+  if (buffer_size != _size)
+    return std::unexpected(
+        "New data does not exactly match the size of the data on the buffer");
+  // Staging buffer - host accessible, perform memcpy of initial data
+  auto maybe_staging_buff_and_mem = DeviceUtil::create_buffer(
+      object_refs.logical_ref, object_refs.physical_ref, buffer_size,
+      vk::BufferUsageFlagBits::eTransferSrc,
+      vk::MemoryPropertyFlagBits::eHostVisible |
+          vk::MemoryPropertyFlagBits::eHostCoherent);
+
+  if (!maybe_staging_buff_and_mem)
+    return std::unexpected("Couldn't create staging buffer: " +
+                           maybe_staging_buff_and_mem.error());
+
+  auto [staging_buff, staging_mem] =
+      std::move(maybe_staging_buff_and_mem.value());
+
+  void *raw_memory = staging_mem.mapMemory(0, buffer_size);
+  memcpy(raw_memory, new_data.data(), static_cast<std::size_t>(buffer_size));
+  staging_mem.unmapMemory();
+
+  BufferUtils::copy_host_buffer_to_gpu_buffer(
+      object_refs.logical_ref, object_refs.queue_ref, object_refs.command_pool,
+      staging_buff, _buffer,
+      BufferUtils::BufferCopyData{.buff_size = buffer_size});
+
+  return {};
 }
 #endif
