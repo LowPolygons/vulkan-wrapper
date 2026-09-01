@@ -59,16 +59,11 @@ auto SwapchainInfo::SwapchainInfoContainer::create(
 
   auto maybe_extent = std::expected<vk::Extent2D, std::string>{};
 
-  // if (GLFWwindow *window = object_refs.weak_window.lock().get()) {
   maybe_extent = std::expected<vk::Extent2D, std::string>{
       FactoryHelper::choose_extent(surface_capabilities, object_refs.window)};
 
   if (!maybe_extent)
     return std::unexpected(maybe_extent.error());
-  // } else {
-  //   return std::unexpected(
-  //       "Unable to access GLFWwindow weak ptr. Is it still alive?");
-  // }
 
   auto image_count = surface_capabilities.minImageCount + 1;
 
@@ -94,8 +89,6 @@ auto SwapchainInfo::SwapchainInfoContainer::create(
   auto swap_chain =
       vk::raii::SwapchainKHR(object_refs.device_ref, swap_chain_create_info);
   auto images = swap_chain.getImages();
-
-  std::cout << "Images size: " << images.size() << std::endl;
 
   auto surface_format = maybe_chosen_surface.value();
   auto extent = maybe_extent.value();

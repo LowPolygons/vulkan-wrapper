@@ -96,7 +96,6 @@ auto VulkanRoot::create(VulkanRootCreateinfo info)
   auto extracted_instance_and_surface =
       std::move(maybe_instance_and_surface.value());
 
-  std::cout << "Here!" << std::endl;
   // TODO make it optional
   auto maybe_debugger =
       Debugging::Debugger::create(extracted_instance_and_surface.instance());
@@ -104,11 +103,7 @@ auto VulkanRoot::create(VulkanRootCreateinfo info)
   if (!maybe_debugger)
     return std::unexpected("Failed to create debugger");
 
-  std::cout << "Here" << std::endl;
-
   auto extracted_debugger = std::move(maybe_debugger.value());
-
-  std::cout << "Here!!!" << std::endl;
 
   auto maybe_device_and_queue_container =
       DeviceUtil::DeviceAndQueueContainer::create(
@@ -124,6 +119,12 @@ auto VulkanRoot::create(VulkanRootCreateinfo info)
 
   auto extracted_device_and_queue_container =
       std::move(maybe_device_and_queue_container.value());
+
+  std::println(
+      "[PhysicalDevice] This GPU supports up to {} Bytes for push constants",
+      extracted_device_and_queue_container.physical()
+          .getProperties()
+          .limits.maxPushConstantsSize);
 
   auto maybe_swap_chain_info_container =
       SwapchainInfo::SwapchainInfoContainer::create(
