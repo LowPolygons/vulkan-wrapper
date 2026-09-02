@@ -59,8 +59,7 @@ public:
 
   bool is_running() override;
   auto get_current_state(std::shared_ptr<GLFWwindow> window,
-                         const vk::raii::Device &logical_device,
-                         SwapchainInfo::SwapchainInfoContainer &swapchain_state)
+                         const VulkanAppRootRefs root_refs)
       -> std::expected<std::optional<VulkanAppTickState>, std::string> override;
 
   auto record_command_buffer(ConwaysState push_constants,

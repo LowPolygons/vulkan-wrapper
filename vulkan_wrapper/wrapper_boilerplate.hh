@@ -5,6 +5,7 @@
 #include "vulkan_wrapper/debugger/debugger_container.hh"
 #include "vulkan_wrapper/device/device_and_queue_container.hh"
 #include "vulkan_wrapper/glfw/glfw_window_handler.hh"
+#include "vulkan_wrapper/image/graphics_depth_image_container.hh"
 #include "vulkan_wrapper/instance_and_surface/instance_and_surface_container.hh"
 #include "vulkan_wrapper/swapchain/swapchain_info_container.hh"
 #include <vulkan/vulkan_core.h>
@@ -18,18 +19,6 @@ struct VulkanAppTickState {
   uint32_t current_image_index;
 
   vk::SubmitInfo queue_submit_info;
-};
-
-struct VulkanAppInterface {
-  virtual ~VulkanAppInterface() = default;
-
-  virtual bool is_running() = 0;
-  // WARN: Could be more semantic
-  // INFO: if it returns nullopt, the swap chain needs recreating
-  virtual std::expected<std::optional<VulkanAppTickState>, std::string>
-  get_current_state(std::shared_ptr<GLFWwindow> window,
-                    const vk::raii::Device &logical_device,
-                    SwapchainInfo::SwapchainInfoContainer &swapchain_state) = 0;
 };
 
 struct VulkanRootCreateinfo {
@@ -54,6 +43,23 @@ struct VulkanRootCreateinfo {
   vk::PresentModeKHR present_mode;
 };
 
+struct VulkanAppRootRefs {
+  DeviceUtil::DeviceAndQueueContainer &device_and_queue_ref;
+  SwapchainInfo::SwapchainInfoContainer &swapchain_state_ref;
+  GraphicsPipeline::DepthDataContainer &depth_data_container;
+};
+
+struct VulkanAppInterface {
+  virtual ~VulkanAppInterface() = default;
+
+  virtual bool is_running() = 0;
+  // WARN: Could be more semantic
+  // INFO: if it returns nullopt, the swap chain needs recreating
+  virtual std::expected<std::optional<VulkanAppTickState>, std::string>
+  get_current_state(std::shared_ptr<GLFWwindow> window,
+                    const VulkanAppRootRefs root_refs) = 0;
+};
+
 struct VulkanRoot {
   static auto create(VulkanRootCreateinfo info)
       -> std::expected<VulkanRoot, std::string>;
@@ -70,10 +76,12 @@ private:
              InstanceAndSurface::VulkanInstanceAndSurface &&i_a_s,
              Debugging::Debugger &&d,
              DeviceUtil::DeviceAndQueueContainer &&d_a_q,
-             SwapchainInfo::SwapchainInfoContainer &&s_c_i)
+             SwapchainInfo::SwapchainInfoContainer &&s_c_i,
+             GraphicsPipeline::DepthDataContainer &&d_d_c)
       : present_mode(p_m), window_container(std::move(w_c)),
         instance_and_surface(std::move(i_a_s)), debugger(std::move(d)),
-        device_and_queue(std::move(d_a_q)), swapchain_info(std::move(s_c_i)) {}
+        device_and_queue(std::move(d_a_q)), swapchain_info(std::move(s_c_i)),
+        depth_data_container(std::move(d_d_c)) {}
 
 public:
   vk::PresentModeKHR present_mode;
@@ -83,6 +91,11 @@ public:
   Debugging::Debugger debugger;
   DeviceUtil::DeviceAndQueueContainer device_and_queue;
   SwapchainInfo::SwapchainInfoContainer swapchain_info;
+
+  // TODO: the depth image is directly tied to the swapchain but compute only
+  // apps wouldn't use it I suppose the same could be argued about the
+  // window_container, though
+  GraphicsPipeline::DepthDataContainer depth_data_container;
 };
 
 #endif

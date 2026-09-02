@@ -7,11 +7,12 @@
 // This function transitions the iamge layout from one layout to another
 // https://docs.vulkan.org/tutorial/latest/03_Drawing_a_triangle/03_Drawing/01_Command_buffers.html
 void BufferUtils::transition_image_layout_on_buffer(
-    vk::raii::CommandBuffer &buffer_ref, vk::Image &image_ref,
+    vk::raii::CommandBuffer &buffer_ref, vk::Image image_ref,
     vk::ImageLayout old_layout, vk::ImageLayout new_layout,
     vk::AccessFlags2 src_access_mask, vk::AccessFlags2 dst_access_mask,
     vk::PipelineStageFlags2 src_stage_mask,
-    vk::PipelineStageFlags2 dst_stage_mask) {
+    vk::PipelineStageFlags2 dst_stage_mask,
+    vk::ImageAspectFlags image_aspect_flags) {
   vk::ImageMemoryBarrier2 barrier = {
       .srcStageMask = src_stage_mask,
       .srcAccessMask = src_access_mask,
@@ -22,7 +23,7 @@ void BufferUtils::transition_image_layout_on_buffer(
       .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
       .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
       .image = image_ref,
-      .subresourceRange = {.aspectMask = vk::ImageAspectFlagBits::eColor,
+      .subresourceRange = {.aspectMask = image_aspect_flags,
                            .baseMipLevel = 0,
                            .levelCount = 1,
                            .baseArrayLayer = 0,

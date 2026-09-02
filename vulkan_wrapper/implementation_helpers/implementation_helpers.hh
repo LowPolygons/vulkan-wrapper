@@ -5,6 +5,7 @@
 #include "vulkan_wrapper/buffers/transition_buffer_layout.hh"
 #include "vulkan_wrapper/pipeline/graphics_pipeline_container.hh"
 #include <glm/glm.hpp>
+#include <optional>
 
 namespace ImplementationHelp {
 
@@ -100,12 +101,13 @@ static auto record_compute_stage(vk::raii::CommandBuffer &command_buffer,
     -> void;
 
 template <typename PC_OR_VOID>
-static auto record_graphics_stage(vk::raii::CommandBuffer &command_buffer,
-                                  const vk::raii::Pipeline &pipeline,
-                                  const vk::raii::PipelineLayout &layout_ref,
-                                  GraphicsStage<PC_OR_VOID> stage_info,
-                                  std::optional<PC_OR_VOID> maybe_push_constant)
-    -> void;
+static auto record_graphics_stage(
+    vk::raii::CommandBuffer &command_buffer, const vk::raii::Pipeline &pipeline,
+    const vk::raii::PipelineLayout &layout_ref,
+    GraphicsStage<PC_OR_VOID> stage_info,
+    std::optional<PC_OR_VOID> maybe_push_constant,
+    std::optional<vk::RenderingAttachmentInfo> maybe_depth_attachment_info =
+        std::nullopt) -> void;
 } // namespace CommandBuffer
 } // namespace ImplementationHelp
 
@@ -138,7 +140,9 @@ auto ImplementationHelp::CommandBuffer::record_graphics_stage(
     vk::raii::CommandBuffer &command_buffer, const vk::raii::Pipeline &pipeline,
     const vk::raii::PipelineLayout &layout_ref,
     GraphicsStage<PC_OR_VOID> stage_info,
-    std::optional<PC_OR_VOID> maybe_push_constant) -> void {
+    std::optional<PC_OR_VOID> maybe_push_constant,
+    std::optional<vk::RenderingAttachmentInfo> maybe_depth_attachment_info)
+    -> void {
 
   BufferUtils::transition_image_layout_on_buffer(
       command_buffer, stage_info.transition_image, vk::ImageLayout::eUndefined,
@@ -161,6 +165,9 @@ auto ImplementationHelp::CommandBuffer::record_graphics_stage(
                         .colorAttachmentCount = 1,
                         .pColorAttachments = &attachment_info};
 
+  if (maybe_depth_attachment_info.has_value())
+    rendering_info.pDepthAttachment = &maybe_depth_attachment_info.value();
+
   command_buffer.beginRendering(rendering_info);
   command_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
 
@@ -180,6 +187,8 @@ auto ImplementationHelp::CommandBuffer::record_graphics_stage(
   }
 
   command_buffer.drawIndexed(stage_info.num_indices, 1, 0, 0, 0);
+
+  command_buffer.endRendering();
 
   BufferUtils::transition_image_layout_on_buffer(
       command_buffer, stage_info.transition_image,

@@ -2,6 +2,8 @@
 #include "tiny_obj_loader.h"
 #include "vulkan_wrapper/buffers/arbitrary_gpu_data_buffer.hh"
 #include "vulkan_wrapper/buffers/data_buffer_container.hh"
+#include "vulkan_wrapper/buffers/transition_buffer_layout.hh"
+#include "vulkan_wrapper/image/graphics_depth_image_container.hh"
 #include "vulkan_wrapper/implementation_helpers/implementation_helpers.hh"
 #include "vulkan_wrapper/pipeline/graphics_pipeline_container.hh"
 
@@ -76,15 +78,6 @@ auto ObjLoaderApp::get_data_buffer_container(std::string path,
     }
   }
 
-  // all_vertices = {
-  //     {{-1.0, -1.0, 0.5}, {0.0, 0.0}, {1.0, 1.0, 1.0}},
-  //     {{1.0, -1.0, 0.5}, {0.0, 0.0}, {1.0, 0.0, 1.0}},
-  //     {{1.0, 1.0, 0.5}, {0.0, 0.0}, {0.0, 1.0, 1.0}},
-  //     {{-1.0, 1.0, 0.5}, {0.0, 0.0}, {0.0, 1.0, 0.0}},
-  // };
-  //
-  // all_indices = {0, 1, 2, 2, 3, 0};
-
   std::println("Object Vertices and Indices Count: {}, {}", all_vertices.size(),
                all_indices.size());
 
@@ -107,6 +100,34 @@ auto ObjLoaderApp::get_data_buffer_container(std::string path,
   auto final_object = std::move(maybe_data_container.value());
 
   return std::move(final_object);
+}
+
+auto ObjLoaderApp::update_mvp_object() -> ObjLoaderUniformMVP {
+
+  static auto start_time = std::chrono::high_resolution_clock::now();
+
+  auto current_time = std::chrono::high_resolution_clock::now();
+
+  auto time_diff = std::chrono::duration<float, std::chrono::seconds::period>(
+                       current_time - start_time)
+                       .count();
+
+  auto ubo = ObjLoaderUniformMVP{};
+
+  float scale = 0.1f;
+
+  ubo.model = glm::scale(glm::mat4(1.0f), glm::vec3(scale)) *
+              glm::rotate(glm::mat4(1.0f), time_diff * glm::radians(90.0f),
+                          glm::vec3(1.0f, -5.0f, 5.0f));
+  ubo.view =
+      glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f),
+                  glm::vec3(0.0f, 0.0f, 1.0f));
+
+  ubo.proj = glm::perspective(
+      glm::radians(45.0f), static_cast<float>(1920) / static_cast<float>(1080),
+      0.1f, 10.0f);
+
+  return ubo;
 }
 auto ObjLoaderApp::create(ObjLoaderAppCreateInfo info, VulkanRoot &root)
     -> std::expected<ObjLoaderApp, std::string> {
@@ -154,31 +175,8 @@ auto ObjLoaderApp::create(ObjLoaderAppCreateInfo info, VulkanRoot &root)
 
   auto extracted_sync_objects = std::move(maybe_sync_objects.value());
 
-  static auto start_time = std::chrono::high_resolution_clock::now();
-
-  auto current_time = std::chrono::high_resolution_clock::now();
-
-  auto time_diff = std::chrono::duration<float, std::chrono::seconds::period>(
-                       current_time - start_time)
-                       .count();
-
-  auto ubo = ObjLoaderUniformMVP{};
-
-  float scale = 0.1f;
-
-  ubo.model = glm::scale(glm::mat4(1.0f), glm::vec3(scale)) *
-              glm::rotate(glm::mat4(1.0f), time_diff * glm::radians(90.0f),
-                          glm::vec3(0.0f, 0.0f, 1.0f));
-  ubo.view =
-      glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f),
-                  glm::vec3(0.0f, 0.0f, 1.0f));
-
-  ubo.proj = glm::perspective(
-      glm::radians(45.0f), static_cast<float>(1920) / static_cast<float>(1080),
-      0.1f, 10.0f);
-  ubo.proj[1][1] *= -1;
-
-  auto vector_of_ubo = std::vector{ubo};
+  auto mvp = ObjLoaderApp::update_mvp_object();
+  auto vector_of_ubo = std::vector{mvp};
 
   auto maybe_ubo_buffer =
       BufferUtils::ArbitraryGpuDataContainer<ObjLoaderUniformMVP>::create(
@@ -203,48 +201,34 @@ auto ObjLoaderApp::create(ObjLoaderAppCreateInfo info, VulkanRoot &root)
   return object;
 }
 
-// // NOTE: for smaller objects, push constants should be used instead
-// auto ObjLoaderApp::update_uniform_buffer(uint32_t current_image,
-//                                          vk::Extent2D &dimensions) -> void {
-//   static auto start_time = std::chrono::high_resolution_clock::now();
-//
-//   auto current_time = std::chrono::high_resolution_clock::now();
-//
-//   auto time_diff = std::chrono::duration<float,
-//   std::chrono::seconds::period>(
-//                        current_time - start_time)
-//                        .count();
-//
-//   auto ubo = ObjLoaderUniformMVP{};
-//
-//   ubo.model = glm::rotate(glm::mat4(1.0f), time_diff * glm::radians(90.0f),
-//                           glm::vec3(0.0f, 0.0f, 1.0f));
-//   ubo.view =
-//       glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f),
-//                   glm::vec3(0.0f, 0.0f, 1.0f));
-//
-//   ubo.proj = glm::perspective(glm::radians(45.0f),
-//                               static_cast<float>(dimensions.width) /
-//                                   static_cast<float>(dimensions.height),
-//                               0.1f, 10.0f);
-//   ubo.proj[1][1] *= -1;
-//
-//   memcpy(uniform_buffer_container.uniform_buffer_mapped(current_image), &ubo,
-//          sizeof(ubo));
-// }
-
-auto ObjLoaderApp::get_current_state(
-    std::shared_ptr<GLFWwindow> window, const vk::raii::Device &logical_device,
-    SwapchainInfo::SwapchainInfoContainer &swapchain_state)
+auto ObjLoaderApp::get_current_state(std::shared_ptr<GLFWwindow> window,
+                                     VulkanAppRootRefs root_refs)
     -> std::expected<std::optional<VulkanAppTickState>, std::string> {
   // Ensures that the viewport updates as the screen changes size
-  graphics_pipeline_data.update_dynamic_objects(swapchain_state.dimensions());
+  graphics_pipeline_data.update_dynamic_objects(
+      root_refs.swapchain_state_ref.dimensions());
 
   auto push_constants = ObjLoaderPushConstants{
-      .win_width = swapchain_state.dimensions().height,
-      .win_height = swapchain_state.dimensions().width,
-      .address = static_cast<uint64_t>(mvp_container.address(logical_device))};
+      .win_width = root_refs.swapchain_state_ref.dimensions().width,
+      .win_height = root_refs.swapchain_state_ref.dimensions().height,
+      .address = static_cast<uint64_t>(
+          mvp_container.address(root_refs.device_and_queue_ref.logical()))};
 
+  auto new_mvp = ObjLoaderApp::update_mvp_object();
+  //
+  auto maybe_data_upload_success = mvp_container.override_gpu_data(
+      BufferUtils::NeededObjects{
+          .physical_ref = root_refs.device_and_queue_ref.physical(),
+          .logical_ref = root_refs.device_and_queue_ref.logical(),
+          .queue_ref = root_refs.device_and_queue_ref.queue(),
+          .command_pool = command_pool_and_buffers.command_pool(),
+      },
+      std::vector{new_mvp});
+  if (!maybe_data_upload_success)
+    return std::unexpected("ObjectLoaderApp GPU Data Override Error: " +
+                           maybe_data_upload_success.error());
+
+  auto &logical_device = root_refs.device_and_queue_ref.logical();
   // This stuff is mostly the same across apps
   auto &fence_ref = sync_objects.fence(current_frame_index);
 
@@ -259,22 +243,25 @@ auto ObjLoaderApp::get_current_state(
   auto &present_complete_sem =
       sync_objects.present_complete_semaphore(current_frame_index);
 
-  auto [result, image_index] = swapchain_state.swap_chain().acquireNextImage(
-      UINT64_MAX, present_complete_sem, nullptr);
+  auto [result, image_index] =
+      root_refs.swapchain_state_ref.swap_chain().acquireNextImage(
+          UINT64_MAX, present_complete_sem, nullptr);
 
-  if (result == vk::Result::eErrorOutOfDateKHR) {
+  if (result == vk::Result::eErrorOutOfDateKHR ||
+      result == vk::Result::eSuboptimalKHR) {
     // Swap chain requires recreation
     return std::nullopt;
   }
 
-  if (result != vk::Result::eSuccess && result != vk::Result::eSuboptimalKHR)
+  if (result != vk::Result::eSuccess)
     return std::unexpected("Failed to acquire next swap chain image");
 
-  record_command_buffer(push_constants, swapchain_state.images()[image_index],
-                        swapchain_state.image_views()[image_index],
-                        graphics_pipeline_data.scissor(),
-                        graphics_pipeline_data.viewport(),
-                        graphics_pipeline_data.scissor());
+  record_command_buffer(
+      push_constants, root_refs.depth_data_container,
+      root_refs.swapchain_state_ref.images()[image_index],
+      root_refs.swapchain_state_ref.image_views()[image_index],
+      graphics_pipeline_data.scissor(), graphics_pipeline_data.viewport(),
+      graphics_pipeline_data.scissor());
 
   auto wait_destination_stage_mask =
       vk::PipelineStageFlags{vk::PipelineStageFlagBits::eColorAttachmentOutput};
@@ -305,12 +292,11 @@ auto ObjLoaderApp::get_current_state(
   return state_info;
 }
 
-auto ObjLoaderApp::record_command_buffer(ObjLoaderPushConstants push_constants,
-                                         vk::Image &transition_image,
-                                         vk::raii::ImageView &image_view,
-                                         vk::Rect2D render_area,
-                                         vk::Viewport viewport,
-                                         vk::Rect2D scissor) -> void {
+auto ObjLoaderApp::record_command_buffer(
+    ObjLoaderPushConstants push_constants,
+    GraphicsPipeline::DepthDataContainer &depth_data_container,
+    vk::Image &transition_image, vk::raii::ImageView &image_view,
+    vk::Rect2D render_area, vk::Viewport viewport, vk::Rect2D scissor) -> void {
   auto &command_buffer =
       command_pool_and_buffers.get_buffer_ref(current_frame_index);
 
@@ -319,6 +305,24 @@ auto ObjLoaderApp::record_command_buffer(ObjLoaderPushConstants push_constants,
 
   command_buffer.setViewport(0, viewport);
   command_buffer.setScissor(0, scissor);
+
+  auto depth_attachment_info = vk::RenderingAttachmentInfo{
+      .imageView = depth_data_container.view(),
+      .imageLayout = vk::ImageLayout::eDepthAttachmentOptimal,
+      .loadOp = vk::AttachmentLoadOp::eClear,
+      .storeOp = vk::AttachmentStoreOp::eDontCare,
+      .clearValue = vk::ClearDepthStencilValue(1.0f, 0.0)};
+
+  BufferUtils::transition_image_layout_on_buffer(
+      command_buffer, depth_data_container.image(), vk::ImageLayout::eUndefined,
+      vk::ImageLayout::eDepthAttachmentOptimal,
+      vk::AccessFlagBits2::eDepthStencilAttachmentWrite,
+      vk::AccessFlagBits2::eDepthStencilAttachmentWrite,
+      vk::PipelineStageFlagBits2::eEarlyFragmentTests |
+          vk::PipelineStageFlagBits2::eLateFragmentTests,
+      vk::PipelineStageFlagBits2::eEarlyFragmentTests |
+          vk::PipelineStageFlagBits2::eLateFragmentTests,
+      vk::ImageAspectFlagBits::eDepth);
 
   ImplementationHelp::CommandBuffer::record_graphics_stage<
       ObjLoaderPushConstants>(
@@ -334,15 +338,13 @@ auto ObjLoaderApp::record_command_buffer(ObjLoaderPushConstants push_constants,
           .indices_type =
               ImplementationHelp::CommandBuffer::IndicesType::INT_32,
           .default_colour = default_colour},
-      push_constants);
+      push_constants, depth_attachment_info);
 
   command_buffer.end();
 }
 
 auto create_obj_loader_app(VulkanRoot &root)
     -> std::expected<ObjLoaderApp, std::string> {
-  // constexpr auto inital_object_path =
-  //     "src/apps/obj_loader/objects/viking_room.obj";
   constexpr auto inital_object_path =
       "src/apps/obj_loader/objects/FinalBaseMesh.obj";
   constexpr auto shader_path = "shaders/obj_loader.spv";
@@ -361,7 +363,10 @@ auto create_obj_loader_app(VulkanRoot &root)
       vk::PushConstantRange{.stageFlags = vk::ShaderStageFlagBits::eAllGraphics,
                             .offset = 0,
                             .size = sizeof(ObjLoaderPushConstants)}};
-  graphics_pipeline.cull_mode = vk::CullModeFlagBits::eNone;
+  graphics_pipeline.cull_mode = vk::CullModeFlagBits::eBack;
+  graphics_pipeline.use_generic_depth_stencil = true;
+  graphics_pipeline.front_face = vk::FrontFace::eClockwise;
+  graphics_pipeline.depth_stencil_format = vk::Format::eD32Sfloat;
 
   auto app_create_info = ObjLoaderAppCreateInfo{
       .buffer_stage = vk::ShaderStageFlagBits::eAllGraphics,

@@ -29,9 +29,11 @@ ObjectLoaderPushConstant properties;
 VertexOutput vertMain(VSInput input) {
     VertexOutput output;
     // There is only one
-    UniformBuffer ubo = properties.ubo[0];
+    UniformBuffer ubo = *properties.ubo;
 
-    output.sv_position = mul(ubo.proj, mul(ubo.view, mul(ubo.model, float4(input.inPosition, 1.0))));
+    float4 pre_processed_pos = float4(input.inPosition, 1.0);
+
+    output.sv_position = mul(ubo.proj, mul(ubo.view, mul(ubo.model, pre_processed_pos)));
     output.color = abs(normalize(input.colour));
     
     return output;

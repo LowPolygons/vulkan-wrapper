@@ -28,6 +28,8 @@ add_library(vulkan_wrapper
     vulkan_wrapper/pipeline/compute_pipeline_container.cc
     vulkan_wrapper/debugger/debugger_container.cc
     vulkan_wrapper/implementation_helpers/implementation_helpers.cc
+    vulkan_wrapper/image/image_utils.cc
+    vulkan_wrapper/image/graphics_depth_image_container.cc
     vulkan_wrapper/wrapper_boilerplate.cc
 )
 
@@ -49,10 +51,10 @@ target_compile_definitions(vulkan_wrapper PUBLIC
 
 find_program(SLANGC_EXECUTABLE slangc REQUIRED)
 set(SHADER_SLANG_SOURCES
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/apps/mandelbulb/mandelbulb.slang
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/apps/obj_loader/object_loader.slang
 )
 set(NEW_SHADER_BINARY
-    mandelbulb.spv
+    obj_loader.spv
 )
 message(STATUS "Shader sources: ${SHADER_SLANG_SOURCES}")
 

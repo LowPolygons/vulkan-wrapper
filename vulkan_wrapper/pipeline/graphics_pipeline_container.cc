@@ -1,5 +1,7 @@
 
 #include "vulkan_wrapper/pipeline/graphics_pipeline_container.hh"
+#include <print>
+#include <vulkan/vulkan_core.h>
 #include <vulkan/vulkan_raii.hpp>
 
 #include "vulkan_wrapper/shaders/shader_utils.hh"
@@ -105,8 +107,16 @@ auto GraphicsPipeline::PipelineContainer::create(
       .sampleShadingEnable = vk::False,
   };
 
-  // TODO: To be looked into
-  vk::PipelineDepthStencilStateCreateInfo *depth_stencil_info = nullptr;
+  auto depth_stencil_info = vk::PipelineDepthStencilStateCreateInfo{};
+  if (info.use_generic_depth_stencil) {
+    depth_stencil_info = vk::PipelineDepthStencilStateCreateInfo{
+        .depthTestEnable = vk::True,
+        .depthWriteEnable = vk::True,
+        .depthCompareOp = vk::CompareOp::eLess,
+        .depthBoundsTestEnable = vk::False,
+        .stencilTestEnable = vk::False};
+    std::println("Depth stencil beign used");
+  }
 
   auto pipeline_layout_create_info = vk::PipelineLayoutCreateInfo{};
 
@@ -131,6 +141,9 @@ auto GraphicsPipeline::PipelineContainer::create(
       .colorAttachmentCount = 1,
       .pColorAttachmentFormats = &surface_format.format};
 
+  if (info.use_generic_depth_stencil)
+    pipeline_rendering_info.depthAttachmentFormat = info.depth_stencil_format;
+
   auto pipeline_info_chain =
       vk::StructureChain<vk::GraphicsPipelineCreateInfo,
                          vk::PipelineRenderingCreateInfo>{
@@ -142,13 +155,12 @@ auto GraphicsPipeline::PipelineContainer::create(
               .pViewportState = &viewport_info,
               .pRasterizationState = &rasterisation_info,
               .pMultisampleState = &multi_sampling_info,
+              .pDepthStencilState = &depth_stencil_info,
               .pColorBlendState = &info.colour_blend_data,
               .pDynamicState = &dynamic_state_pipeline_info,
               .layout = graphics_pipeline_layout,
               .renderPass = nullptr},
-          vk::PipelineRenderingCreateInfo{.colorAttachmentCount = 1,
-                                          .pColorAttachmentFormats =
-                                              &surface_format.format}};
+          pipeline_rendering_info};
 
   auto graphics_pipeline = vk::raii::Pipeline(
       device, nullptr,

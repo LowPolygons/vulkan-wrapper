@@ -23,6 +23,9 @@ struct PipelineContainerCreateInfo {
   vk::Viewport screen_region;
   vk::Rect2D image_slice;
 
+  bool use_generic_depth_stencil;
+  vk::Format depth_stencil_format;
+
   // Render Info
   vk::PolygonMode polygon_mode;
   vk::CullModeFlagBits cull_mode;

@@ -1,6 +1,7 @@
 #include "vulkan_wrapper/wrapper_boilerplate.hh"
 #include "vulkan/vulkan.hpp"
 #include "vulkan_wrapper/debugger/debugger_container.hh"
+#include "vulkan_wrapper/image/graphics_depth_image_container.hh"
 #include "vulkan_wrapper/instance_and_surface/instance_and_surface_container.hh"
 #include "vulkan_wrapper/swapchain/swapchain_info_container.hh"
 #include <GLFW/glfw3.h>
@@ -16,13 +17,16 @@ auto VulkanRoot::print_state() -> void { std::println("To be completed!"); }
 
 auto VulkanRoot::run_app(VulkanAppInterface &app)
     -> std::expected<void, std::string> {
+  auto vulkan_root_refs =
+      VulkanAppRootRefs{.device_and_queue_ref = device_and_queue,
+                        .swapchain_state_ref = swapchain_info,
+                        .depth_data_container = depth_data_container};
   while (app.is_running() and
          !glfwWindowShouldClose(window_container.shared_get().get())) {
     glfwPollEvents();
 
     auto maybe_current_run_state =
-        app.get_current_state(window_container.shared_get(),
-                              device_and_queue.logical(), swapchain_info);
+        app.get_current_state(window_container.shared_get(), vulkan_root_refs);
 
     if (!maybe_current_run_state)
       return std::unexpected("App Failed to get the current state: " +
@@ -148,12 +152,26 @@ auto VulkanRoot::create(VulkanRootCreateinfo info)
   auto extracted_swap_chain_info =
       std::move(maybe_swap_chain_info_container.value());
 
+  auto maybe_depth_container = GraphicsPipeline::DepthDataContainer::create(
+      GraphicsPipeline::DepthDataContainerCreateInfo{
+          .swapchain_width = extracted_swap_chain_info.dimensions().width,
+          .swapchain_height = extracted_swap_chain_info.dimensions().height,
+          .preferred_format = vk::Format::eD32Sfloat},
+      extracted_device_and_queue_container.logical(),
+      extracted_device_and_queue_container.physical());
+
+  if (!maybe_depth_container)
+    return std::unexpected("Depth Container object init error: " +
+                           maybe_depth_container.error());
+
+  auto extracted_depth_container = std::move(maybe_depth_container.value());
+
   auto object = VulkanRoot(info.present_mode, std::move(glfw_window_container),
                            std::move(extracted_instance_and_surface),
                            std::move(extracted_debugger),
                            std::move(extracted_device_and_queue_container),
-                           std::move(extracted_swap_chain_info));
-
+                           std::move(extracted_swap_chain_info),
+                           std::move(extracted_depth_container));
   return object;
 }
 
@@ -178,6 +196,18 @@ auto VulkanRoot::recreate_swap_chain() -> std::expected<void, std::string> {
     return std::unexpected(maybe_swap_chain_info_container.error());
 
   swapchain_info = std::move(maybe_swap_chain_info_container.value());
+
+  auto maybe_new_depth_objects = GraphicsPipeline::DepthDataContainer::create(
+      GraphicsPipeline::DepthDataContainerCreateInfo{
+          .swapchain_width = swapchain_info.dimensions().width,
+          .swapchain_height = swapchain_info.dimensions().height,
+          .preferred_format = vk::Format::eD32Sfloat},
+      device_and_queue.logical(), device_and_queue.physical());
+
+  if (!maybe_new_depth_objects)
+    return std::unexpected(maybe_new_depth_objects.error());
+
+  depth_data_container = std::move(maybe_new_depth_objects.value());
 
   return {};
 }

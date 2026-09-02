@@ -5,6 +5,7 @@
 #include "vulkan_wrapper/buffers/command_buffer_container.hh"
 #include "vulkan_wrapper/buffers/data_buffer_container.hh"
 #include "vulkan_wrapper/buffers/uniform_buffer_container.hh"
+#include "vulkan_wrapper/image/graphics_depth_image_container.hh"
 #include "vulkan_wrapper/pipeline/graphics_pipeline_container.hh"
 #include "vulkan_wrapper/syncs/sync_object_container.hh"
 #include "vulkan_wrapper/wrapper_boilerplate.hh"
@@ -73,18 +74,17 @@ public:
   // Vulkan Interface requirements
   bool is_running() override;
   auto get_current_state(std::shared_ptr<GLFWwindow> window,
-                         const vk::raii::Device &logical_device,
-                         SwapchainInfo::SwapchainInfoContainer &swapchain_state)
+                         VulkanAppRootRefs root_refs)
       -> std::expected<std::optional<VulkanAppTickState>, std::string> override;
 
-  auto update_uniform_buffer(uint32_t current_image, vk::Extent2D &dimensions)
-      -> void;
+  static auto update_mvp_object() -> ObjLoaderUniformMVP;
 
-  auto record_command_buffer(ObjLoaderPushConstants push_constants,
-                             vk::Image &transition_image,
-                             vk::raii::ImageView &image_view,
-                             vk::Rect2D render_area, vk::Viewport viewport,
-                             vk::Rect2D scissor) -> void;
+  auto record_command_buffer(
+      ObjLoaderPushConstants push_constants,
+      GraphicsPipeline::DepthDataContainer &depth_data_container,
+      vk::Image &transition_image, vk::raii::ImageView &image_view,
+      vk::Rect2D render_area, vk::Viewport viewport, vk::Rect2D scissor)
+      -> void;
   ObjLoaderApp(
       GraphicsPipeline::PipelineContainer &&g_p_a,
       BufferUtils::CommandPoolAndBuffersContainer &&c_p_a_b,

@@ -121,8 +121,8 @@ auto SlimeApp::create(SlimeCreateInfo info, VulkanRoot &root)
 
     slime.family_index = 0;
 
-    slime.position = center;
-    // glm::vec2{hoz_distribution(rand_gen), vert_distribution(rand_gen)};
+    slime.position = // center;
+        glm::vec2{hoz_distribution(rand_gen), vert_distribution(rand_gen)};
 
     const glm::vec2 to_center = center - slime.position;
 
@@ -190,10 +190,11 @@ auto SlimeApp::create(SlimeCreateInfo info, VulkanRoot &root)
   return object;
 }
 
-auto SlimeApp::get_current_state(
-    std::shared_ptr<GLFWwindow> window, const vk::raii::Device &logical_device,
-    SwapchainInfo::SwapchainInfoContainer &swapchain_state)
+auto SlimeApp::get_current_state(std::shared_ptr<GLFWwindow> window,
+                                 const VulkanAppRootRefs root_refs)
     -> std::expected<std::optional<VulkanAppTickState>, std::string> {
+  auto &swapchain_state = root_refs.swapchain_state_ref;
+  auto &logical_device = root_refs.device_and_queue_ref.logical();
   // Ensures that the viewport updates as the screen changes size
   graphics_pipeline_data.update_dynamic_objects(swapchain_state.dimensions());
 
@@ -392,7 +393,7 @@ auto create_slime_app(VulkanRoot &root)
                   .size = sizeof(SlimePushConstant)}}},
       .sim_width = width,
       .sim_height = height,
-      .num_slimes = 200000,
+      .num_slimes = 1000000,
   };
 
   auto maybe_app = SlimeApp::create(app_create_info, root);
