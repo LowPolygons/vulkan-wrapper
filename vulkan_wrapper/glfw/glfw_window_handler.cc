@@ -11,6 +11,7 @@ GlfwWindowContainer::GlfwWindowContainer(
   glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API); // no opengl
   auto resize_status = resizable ? GLFW_TRUE : GLFW_FALSE;
   glfwWindowHint(GLFW_RESIZABLE, resize_status);
+  glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
 
   window = std::shared_ptr<GLFWwindow>(
       glfwCreateWindow(dimensions.first, dimensions.second, window_name.c_str(),

@@ -21,6 +21,9 @@ auto VulkanRoot::run_app(VulkanAppInterface &app)
       VulkanAppRootRefs{.device_and_queue_ref = device_and_queue,
                         .swapchain_state_ref = swapchain_info,
                         .depth_data_container = depth_data_container};
+
+  glfwShowWindow(window_container.shared_get().get());
+
   while (app.is_running() and
          !glfwWindowShouldClose(window_container.shared_get().get())) {
     glfwPollEvents();
