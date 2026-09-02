@@ -1,14 +1,26 @@
 # Vulkan Wrapper
 
-## Conways Game of Life App
+A basic wrapper around Vulkan, allowing for (reasonably) swift development of vulkan apps
 
-![Conways](conways_hello_world.png)
+### The wrapper supports:
 
-## Slime Simulation
+- Basic 2D and 3D graphics (with depth buffers)
+- Programmable Frag and Vertex Shaders
+- Programmable Compute Shaders
+- Multiple stages of pipelines (see Slime Mold App)
+- Push Constants
+- Uniform Buffers
+- Buffer Addresses (via push constants)
 
-![Slime](slime_simulation.png)
+In the development of an app, the `VulkanRoot` object exposes various references to its lower level objects
 
-## VulkanRoot
+This allows custom control over the creation of objects at run time such as new buffers, or updating existing ones
+
+The VulkanWrapper contains an `ImplementationHelp` namespace which may contain some handy objects/functions to make your VulkanApp neater/concise
+
+## Software Architecture
+
+### VulkanRoot
 
 ```cpp
 struct VulkanRoot {
@@ -21,12 +33,14 @@ struct VulkanRoot {
   VulkanInstanceAndSurface;
   DeviceAndQueueContainer;
   SwapchainInfoContainer;
+  DebuggerContainer;
+  DepthBufferContainer;
 };
 ```
 
 This VulkanRoot contains all the information that is shared across many different vulkan apps
 
-## VulkanApp
+### VulkanApp
 
 ```cpp
 struct VulkanAppInterface {
@@ -37,7 +51,7 @@ struct VulkanAppInterface {
 
 An app to be used by the Vulkan Renderer must implement this interface
 
-## VulkanAppTickState
+### VulkanAppTickState
 
 ```cpp
 struct VulkanAppTickState {
@@ -52,10 +66,9 @@ struct VulkanAppTickState {
 };
 ```
 
-## Example Usage
+### Example Usage
 
 ```cpp
-
 VulkanRoot vulkan{..initialised..};
 MandelbulbApp app1{..initialised..};
 
@@ -80,3 +93,29 @@ VulkanRoot::run_app(App& app) {
   }
 }
 ```
+
+# Example Apps
+
+## Animated Mandelbulb
+
+A Simple raymarching app with a Mandelbulb MSD, which is animated via a 'sin()' power
+
+![Mandelbulb](readme_assets/mandelbulb.png)
+
+## Slime Simulation
+
+1920x1080 Simulation featuring a 2-stage compute pipeline (one for the mesh, one for the slime 'agents'), and a graphics pipeline to render it. Roughly 1 million Slime Agents
+
+![Slime](readme_assets/slime_simulation.png)
+
+## 3D Object Loader
+
+A simple app which utilises tinyobj (packed in its app folder) to display the provided .obj file
+
+![Man](readme_assets/normal_man_object.png)
+
+## Conways Game of Life App
+
+1920x1080 Simulation with random points initialised. Also, a drawing feature was implementing with Pause/Play
+
+![Conways](readme_assets/conways_hello_world.png)

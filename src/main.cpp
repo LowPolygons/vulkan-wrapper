@@ -40,10 +40,10 @@ auto main() -> int {
 
   // auto maybe_app = create_shader_hash_app(vulkan_root);
   // auto maybe_app = create_conways_app(vulkan_root);
-  auto maybe_app = create_slime_app(vulkan_root);
+  // auto maybe_app = create_slime_app(vulkan_root);
   // auto maybe_app = create_mandelbulb_app(vulkan_root);
   // auto maybe_app = create_3d_app(vulkan_root);
-  // auto maybe_app = create_obj_loader_app(vulkan_root);
+  auto maybe_app = create_obj_loader_app(vulkan_root);
 
   if (!maybe_app) {
     std::cerr << maybe_app.error() << std::endl;
