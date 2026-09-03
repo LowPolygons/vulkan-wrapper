@@ -115,7 +115,6 @@ auto GraphicsPipeline::PipelineContainer::create(
         .depthCompareOp = vk::CompareOp::eLess,
         .depthBoundsTestEnable = vk::False,
         .stencilTestEnable = vk::False};
-    std::println("Depth stencil beign used");
   }
 
   auto pipeline_layout_create_info = vk::PipelineLayoutCreateInfo{};

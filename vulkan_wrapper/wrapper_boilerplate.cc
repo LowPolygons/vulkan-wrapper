@@ -13,7 +13,20 @@ auto VulkanRoot::end_glfw_instance() -> void {
   glfwTerminate();
 };
 
-auto VulkanRoot::print_state() -> void { std::println("To be completed!"); }
+auto VulkanRoot::print_state() -> void {
+  auto physical_device_properties = device_and_queue.physical().getProperties();
+  auto physical_device_limits = physical_device_properties.limits;
+
+  auto max_frames_in_flight = swapchain_info.images().size();
+
+  std::println(
+      "[Physical Device]\n- Name: {} \n- Max Push Constant Size: {} Bytes",
+      std::string(physical_device_properties.deviceName.begin(),
+                  physical_device_properties.deviceName.end()),
+      physical_device_limits.maxPushConstantsSize);
+  std::println("[Swapchain]\n- Max Frames In Flight: {} \n",
+               max_frames_in_flight);
+}
 
 auto VulkanRoot::run_app(VulkanAppInterface &app)
     -> std::expected<void, std::string> {
@@ -126,12 +139,6 @@ auto VulkanRoot::create(VulkanRootCreateinfo info)
 
   auto extracted_device_and_queue_container =
       std::move(maybe_device_and_queue_container.value());
-
-  std::println(
-      "[PhysicalDevice] This GPU supports up to {} Bytes for push constants",
-      extracted_device_and_queue_container.physical()
-          .getProperties()
-          .limits.maxPushConstantsSize);
 
   auto maybe_swap_chain_info_container =
       SwapchainInfo::SwapchainInfoContainer::create(

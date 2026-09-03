@@ -38,6 +38,8 @@ auto main() -> int {
 
   auto vulkan_root = std::move(maybe_vulkan_root.value());
 
+  vulkan_root.print_state();
+
   // auto maybe_app = create_shader_hash_app(vulkan_root);
   // auto maybe_app = create_conways_app(vulkan_root);
   // auto maybe_app = create_slime_app(vulkan_root);

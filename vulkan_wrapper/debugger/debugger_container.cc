@@ -2,13 +2,15 @@
 
 // TODO: better understand this function signature to allow a more modular
 // wrapper
-static VKAPI_ATTR vk::Bool32 VKAPI_CALL
-callback_function(vk::DebugUtilsMessageSeverityFlagBitsEXT severity,
-                  vk::DebugUtilsMessageTypeFlagsEXT type,
-                  const vk::DebugUtilsMessengerCallbackDataEXT *p_callback_data,
-                  void *_p_user_data) {
-  std::cerr << "[DEBUGGER]: Message type -> " << to_string(type)
-            << ", Message: " << p_callback_data->pMessage << std::endl;
+static VKAPI_ATTR vk::Bool32 VKAPI_CALL callback_function(
+    vk::DebugUtilsMessageSeverityFlagBitsEXT severity,
+    vk::DebugUtilsMessageTypeFlagsEXT type,
+    const vk::DebugUtilsMessengerCallbackDataEXT *p_callback_data, void *) {
+  std::cerr << "\n========== VULKAN DEBUG ==========\n";
+  std::cerr << "Severity: " << to_string(severity) << '\n';
+  std::cerr << "Type:     " << to_string(type) << '\n';
+  std::cerr << "Message:  " << p_callback_data->pMessage << '\n';
+  std::cerr << "==================================\n\n";
 
   return vk::False;
 }
